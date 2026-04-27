@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: bookmarket-backend
+  datasource:
+    url: ${DB_URL}
+    username: postgres
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      # 애플리케이션 실행 시 Entity 클래스를 바탕으로 DB 테이블을 자동 생성/수정
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true # 콘솔에서 실행되는 쿼리를 확인하기 위함
