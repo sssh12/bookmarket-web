@@ -1,4 +1,4 @@
-package com.market.domain;
+package com.market.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
