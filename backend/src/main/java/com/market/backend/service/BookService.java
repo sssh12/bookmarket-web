@@ -1,6 +1,7 @@
 package com.market.backend.service;
 
 import com.market.backend.domain.Book;
+import com.market.backend.dto.BookRequestDto;
 import com.market.backend.dto.BookResponseDto;
 import com.market.backend.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +26,16 @@ public class BookService {
                 .collect(Collectors.toList());
     }
 
-    // 단일 도서 상세 조회 (향후 장바구니 담기 등에 사용)
+    // 단일 도서 상세 조회
     public BookResponseDto getBookById(Long id) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 도서가 존재하지 않습니다. ID: " + id));
         return BookResponseDto.from(book);
+    }
+
+    @Transactional
+    public void createBook(BookRequestDto requestDto) {
+        Book book = requestDto.toEntity();
+        bookRepository.save(book);
     }
 }
