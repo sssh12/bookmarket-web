@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
-// Zod를 이용한 폼 데이터 유효성 검사 스키마 정의
 const authSchema = z.object({
   email: z.string().email({ message: "올바른 이메일 형식을 입력해주세요." }),
   password: z
@@ -59,6 +58,7 @@ export default function AuthPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
     });
+    navigate("/books");
     if (error) setGlobalMessage(`구글 로그인 에러: ${error.message}`);
   };
 
@@ -136,11 +136,19 @@ export default function AuthPage() {
               reset(); // 모드 전환 시 폼 초기화
               setGlobalMessage("");
             }}
-            className="text-sm text-blue-600 hover:underline cursor-pointer"
+            className="text-sm text-gray-600 hover:text-gray-800 transition cursor-pointer hover:underline"
           >
-            {isLogin
-              ? "계정이 없으신가요? 회원가입"
-              : "이미 계정이 있으신가요? 로그인"}
+            {isLogin ? (
+              <>
+                계정이 없으신가요?{" "}
+                <span className="text-blue-600">회원 가입</span>
+              </>
+            ) : (
+              <>
+                이미 계정이 있으신가요?{" "}
+                <span className="text-blue-600">로그인</span>
+              </>
+            )}
           </button>
         </div>
       </div>

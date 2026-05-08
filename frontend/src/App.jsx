@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { supabase } from "./supabaseClient";
@@ -12,13 +17,13 @@ import OrderPage from "./pages/OrderPage";
 import AdminPage from "./pages/AdminPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PlaceholderPage from "./pages/PlaceholderPage";
 
 function App() {
   const cartItems = useCartStore((state) => state.items);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // 1. Supabase 세션 감지
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -33,7 +38,6 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // 2. 장바구니 내용(cartItems)이 바뀔 때마다 백엔드로 동기화 (DB 영속성 보장)
   useEffect(() => {
     if (session?.user) {
       const syncToDB = async () => {
@@ -48,14 +52,13 @@ function App() {
               quantity: item.quantity,
             })),
           });
-          console.log("장바구니 DB 동기화 완료");
         } catch (error) {
           console.error("장바구니 DB 동기화 실패:", error);
         }
       };
       syncToDB();
     }
-  }, [cartItems, session]); // cartItems나 session이 바뀔 때 자동 실행
+  }, [cartItems, session]);
 
   if (authLoading)
     return (
@@ -70,13 +73,21 @@ function App() {
         <Navbar session={session} />
         <main>
           <Routes>
-            <Route path="/" element={<AuthPage />} />
+            <Route
+              path="/"
+              element={
+                session ? <Navigate to="/books" replace /> : <AuthPage />
+              }
+            />
 
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/books" element={<BookList />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/order" element={<OrderPage />} />
+
+              {/* 아직 기능이 개발되지 않은 드롭다운 하위 메뉴들은 준비중 페이지로 연결 */}
+              <Route path="/placeholder" element={<PlaceholderPage />} />
             </Route>
 
             <Route element={<ProtectedRoute requireAdmin={true} />}>
