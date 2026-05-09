@@ -1,8 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useCartStore } from "../store/cartStore";
-import { supabase } from "../supabaseClient";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useCartStore } from "../store/cartStore.jsx";
+import { supabase } from "../supabaseClient.js";
 
-// App.jsx에서 session을 props로 받아옴
 export default function Navbar({ session }) {
   const cartItems = useCartStore((state) => state.items) || [];
   const totalQuantity = cartItems.reduce(
@@ -10,60 +9,83 @@ export default function Navbar({ session }) {
     0,
   );
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
 
-  // 상단 네비게이션 바에서 직접 로그아웃 하는 함수
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
 
-  // 현재 로그인한 사람이 관리자인지 확인
   const isAdmin = session?.user?.email === "admin@test.com";
 
+  // ESLint 경고(no-useless-assignment) 해결 및 relatedPaths 찜한 상품 로직 유지
+  const getMenuClass = (path, isSubMenu = false, relatedPaths = []) => {
+    const isActive =
+      path === "/"
+        ? currentPath === "/"
+        : isSubMenu
+          ? currentPath === path
+          : currentPath.startsWith(path) ||
+            relatedPaths.some((p) => currentPath.startsWith(p));
+
+    if (isSubMenu) {
+      return `px-5 py-2.5 text-sm font-medium transition-colors ${
+        isActive
+          ? "bg-blue-50 text-blue-700 font-bold"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+      }`;
+    }
+
+    return `px-3 py-5 block transition-colors ${
+      isActive
+        ? "text-blue-600 font-bold"
+        : "text-gray-600 font-medium hover:text-gray-900"
+    }`;
+  };
+
   return (
-    <nav className="bg-white text-black rounded-b-4xl border-gray-400 p-6 shadow-lg relative z-50">
-      <div className="container mx-auto flex justify-between items-center">
+    <nav className="bg-white border-b border-gray-100 shadow-sm relative z-50">
+      <div className="container mx-auto px-6 h-16 flex justify-between items-center">
         {/* 좌측: 메인 메뉴 영역 */}
-        <div className="space-x-2 md:space-x-6 flex items-center">
+        <div className="flex items-center gap-2 md:gap-6">
           {!session ? (
-            <Link
-              to="/"
-              className="hover:text-blue-500 font-medium px-2 py-2 transition-colors"
-            >
+            <Link to="/" className={getMenuClass("/")}>
               로그인
             </Link>
           ) : (
             <>
-              {/* 고객 정보 Dropdown */}
-              <div className="relative group flex items-center h-full">
-                <span className="cursor-pointer hover:text-blue-500 font-medium px-2 py-2 transition-colors">
+              {/* 1. 고객 정보 */}
+              <div className="relative group cursor-pointer">
+                <Link
+                  to="/profile"
+                  className={getMenuClass("/profile", false, ["/wishlist"])}
+                >
                   고객 정보
-                </span>
-                {/* pt-2는 마우스 이동 시 메뉴가 닫히지 않게 하는 투명 브릿지 역할 */}
-                <div className="absolute top-full left-0 pt-2 w-36 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden flex flex-col">
+                </Link>
+                <div className="absolute top-14 left-0 w-40 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 ease-out z-50">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 flex flex-col overflow-hidden">
                     <Link
                       to="/profile"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm border-b"
+                      className={getMenuClass("/profile", true)}
                     >
                       내 정보
                     </Link>
                     <Link
-                      to="/placeholder"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm border-b"
+                      to="/profile-edit"
+                      className={getMenuClass("/profile-edit", true)}
                     >
                       내 정보 수정
                     </Link>
                     <Link
-                      to="/placeholder"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm border-b"
+                      to="/wishlist"
+                      className={getMenuClass("/wishlist", true)}
                     >
                       찜한 상품
                     </Link>
-                    {/* 드롭다운 내부에도 로그아웃을 배치해 접근성을 높입니다 */}
                     <button
                       onClick={handleLogout}
-                      className="text-left px-4 py-3 hover:bg-red-50 text-red-500 text-sm font-bold"
+                      className="text-left px-5 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
                     >
                       로그아웃
                     </button>
@@ -71,40 +93,37 @@ export default function Navbar({ session }) {
                 </div>
               </div>
 
-              {/* 상품 목록 Dropdown */}
-              <div className="relative group flex items-center h-full">
-                <span className="cursor-pointer hover:text-blue-500 font-medium px-2 py-2 transition-colors">
+              {/* 2. 상품 목록 */}
+              <div className="relative group cursor-pointer">
+                <Link to="/books" className={getMenuClass("/books")}>
                   상품 목록
-                </span>
-                <div className="absolute top-full left-0 pt-2 w-36 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden flex flex-col">
-                    <Link
-                      to="/books"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm border-b"
-                    >
+                </Link>
+                <div className="absolute top-14 left-0 w-40 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 ease-out z-50">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 flex flex-col overflow-hidden">
+                    <Link to="/books" className={getMenuClass("/books", true)}>
                       전체 도서
                     </Link>
                     <Link
-                      to="/placeholder"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm border-b text-blue-600 font-bold"
+                      to="/books/bestseller"
+                      className={getMenuClass("/books/bestseller", true)}
                     >
                       베스트셀러
                     </Link>
                     <Link
-                      to="/placeholder"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm border-b"
+                      to="/books/new"
+                      className={getMenuClass("/books/new", true)}
                     >
                       신간 도서
                     </Link>
                     <Link
-                      to="/placeholder"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm border-b"
+                      to="/books/domestic"
+                      className={getMenuClass("/books/domestic", true)}
                     >
                       국내 도서
                     </Link>
                     <Link
-                      to="/placeholder"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm"
+                      to="/books/foreign"
+                      className={getMenuClass("/books/foreign", true)}
                     >
                       해외 도서
                     </Link>
@@ -112,47 +131,49 @@ export default function Navbar({ session }) {
                 </div>
               </div>
 
-              {/* 장바구니 Dropdown */}
-              <div className="relative group flex items-center h-full">
-                <span className="cursor-pointer hover:text-blue-500 font-medium px-2 py-2 flex items-center transition-colors">
+              {/* 3. 장바구니 */}
+              <div className="relative group cursor-pointer">
+                <Link
+                  to="/cart"
+                  className={`${getMenuClass("/cart")} flex items-center gap-1.5`}
+                >
                   장바구니
                   {totalQuantity > 0 && (
-                    <span className="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-blue-100 text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                       {totalQuantity}
                     </span>
                   )}
-                </span>
-                <div className="absolute top-full left-0 pt-2 w-40 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden flex flex-col">
+                </Link>
+                <div className="absolute top-14 left-0 w-40 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 ease-out z-50">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 flex flex-col overflow-hidden">
                     <Link
                       to="/cart"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm flex justify-between items-center"
+                      className={`${getMenuClass("/cart", true)} flex justify-between items-center`}
                     >
                       장바구니 가기
-                      <span className="text-blue-600 font-bold">
-                        {totalQuantity}
-                      </span>
+                      {totalQuantity > 0 && (
+                        <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {totalQuantity}
+                        </span>
+                      )}
                     </Link>
                   </div>
                 </div>
               </div>
 
-              {/* 주문하기 Dropdown */}
-              <div className="relative group flex items-center h-full">
-                <span className="cursor-pointer hover:text-blue-500 font-medium px-2 py-2 transition-colors">
+              {/* 4. 주문하기 */}
+              <div className="relative group cursor-pointer">
+                <Link to="/order" className={getMenuClass("/order")}>
                   주문하기
-                </span>
-                <div className="absolute top-full left-0 pt-2 w-36 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden flex flex-col">
-                    <Link
-                      to="/order"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm border-b"
-                    >
+                </Link>
+                <div className="absolute top-14 left-0 w-40 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 ease-out z-50">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 flex flex-col overflow-hidden">
+                    <Link to="/order" className={getMenuClass("/order", true)}>
                       주문/결제
                     </Link>
                     <Link
-                      to="/placeholder"
-                      className="px-4 py-3 hover:bg-gray-100 text-sm"
+                      to="/order-history"
+                      className={getMenuClass("/order-history", true)}
                     >
                       주문 내역 조회
                     </Link>
@@ -160,23 +181,23 @@ export default function Navbar({ session }) {
                 </div>
               </div>
 
-              {/* 관리자 Dropdown (관리자만 노출) */}
+              {/* 5. 관리자 메뉴 */}
               {isAdmin && (
-                <div className="relative group flex items-center h-full">
-                  <span className="cursor-pointer text-blue-600 hover:text-blue-800 font-bold px-2 py-2 transition-colors">
+                <div className="relative group cursor-pointer">
+                  <Link to="/admin" className={getMenuClass("/admin")}>
                     관리자
-                  </span>
-                  <div className="absolute top-full left-0 pt-2 w-40 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <div className="bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden flex flex-col">
+                  </Link>
+                  <div className="absolute top-14 left-0 w-40 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 ease-out z-50">
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 flex flex-col overflow-hidden">
                       <Link
                         to="/admin"
-                        className="px-4 py-3 hover:bg-gray-100 text-sm border-b"
+                        className={getMenuClass("/admin", true)}
                       >
                         신규 도서 등록
                       </Link>
                       <Link
-                        to="/placeholder"
-                        className="px-4 py-3 hover:bg-gray-100 text-sm"
+                        to="/admin/books"
+                        className={getMenuClass("/admin/books", true)}
                       >
                         도서 관리
                       </Link>
@@ -188,15 +209,27 @@ export default function Navbar({ session }) {
           )}
         </div>
 
-        {/* 로그아웃 버튼 */}
+        {/* 우측 아이콘 */}
         {session && (
-          <div className="mx-2">
-            <button
-              onClick={handleLogout}
-              className="text-sm bg-red-400 text-white hover:bg-red-300 hover:text-gray-800 px-3 py-2 rounded-lg cursor-pointer transition-colors shadow-sm"
-            >
-              로그아웃
-            </button>
+          <div className="flex items-center gap-4">
+            {isAdmin ? (
+              <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200 shadow-sm cursor-help">
+                <span className="text-sm">👑</span>
+                <span className="text-xs font-bold text-yellow-700">
+                  관리자 모드
+                </span>
+              </div>
+            ) : (
+              <Link
+                to="/profile"
+                className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors shadow-sm cursor-pointer"
+              >
+                <span className="text-sm">👤</span>
+                <span className="text-xs font-bold text-gray-600 line-clamp-1 max-w-20">
+                  {session.user.user_metadata?.full_name || "회원"}
+                </span>
+              </Link>
+            )}
           </div>
         )}
       </div>

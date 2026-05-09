@@ -1,7 +1,7 @@
 import { useCartStore } from "../store/cartStore";
 import { useForm } from "react-hook-form";
-import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
 import { supabase } from "../supabaseClient";
 import { useEffect, useState } from "react";
 
@@ -11,31 +11,38 @@ export default function OrderPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
-
-  // 로그인한 유저 이메일 상태 관리
   const [userEmail, setUserEmail] = useState(null);
 
   useEffect(() => {
-    // 마운트 시 Supabase에서 현재 세션 가져오기
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && session.user) {
         setUserEmail(session.user.email);
+        const metadata = session.user.user_metadata || {};
+        setValue(
+          "recipient",
+          metadata.full_name || session.user.email.split("@")[0],
+        );
+        setValue("phone", metadata.phone || "");
       }
     });
-  }, []);
+  }, [setValue]);
 
   const totalPrice = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
 
-  // 백엔드와 실제 연동되도록 수정된 onSubmit
   const onSubmit = async (data) => {
+    if (items.length === 0) {
+      alert("주문할 상품이 없습니다.");
+      return;
+    }
     try {
       const orderPayload = {
-        userEmail: userEmail, // 백엔드 user_tb 조회를 위해 이메일 전송
+        userEmail: userEmail,
         recipient: data.recipient,
         phone: data.phone,
         address: data.address,
@@ -47,141 +54,120 @@ export default function OrderPage() {
           price: item.price,
         })),
       };
-
-      // 백엔드로 POST 요청 전송
-      await axios.post("http://127.0.0.1:8080/api/orders", orderPayload);
-
-      alert(
-        `🎉 주문이 성공적으로 완료되었습니다!\n(총 결제 금액: ${totalPrice.toLocaleString()}원)`,
-      );
+      await api.post("/api/orders", orderPayload);
+      alert("주문이 성공적으로 완료되었습니다! 🎉");
       clearCart();
-      navigate("/books");
+      navigate("/order-history"); // 결제 완료 후 주문 내역으로 이동
     } catch (error) {
-      console.error("주문 처리 중 에러 발생:", error);
-      alert("서버 오류로 인해 주문에 실패했습니다.");
+      console.error("주문 처리 오류:", error);
+      alert("주문 처리 중 문제가 발생했습니다.");
     }
   };
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto p-10 text-center h-[60vh] flex flex-col justify-center items-center">
-        <h2 className="text-2xl font-bold text-gray-700 mb-4">
-          주문할 상품이 없습니다.
+      <div className="flex flex-col items-center justify-center min-h-[60vh] bg-gray-50">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          주문할 상품이 없어요
         </h2>
-        <Link
-          to="/books"
-          className="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition"
+        <button
+          onClick={() => navigate("/books")}
+          className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition"
         >
-          상품 목록으로 가기
-        </Link>
+          도서 목록으로 가기
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <h2 className="text-2xl font-bold mb-6 border-b pb-2">📦 주문/결제</h2>
+    <div className="container mx-auto p-4 md:p-8 max-w-3xl">
+      <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-8">
+        주문서 작성
+      </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* 왼쪽: 배송지 정보 입력 폼 */}
-        <div className="bg-white p-6 rounded-lg shadow border">
-          <h3 className="text-lg font-bold mb-4 text-gray-800">배송지 정보</h3>
+      <div className="space-y-6">
+        <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+          <h3 className="text-xl font-bold text-gray-900 mb-6">배송지 정보</h3>
           <form
             id="orderForm"
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4"
+            className="space-y-5"
           >
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                받으시는 분
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                받는 분 (이름)
               </label>
               <input
                 type="text"
-                {...register("recipient", { required: "이름을 입력해주세요." })}
-                className="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                {...register("recipient", { required: true })}
+                readOnly
+                className="w-full px-4 py-3.5 bg-gray-100 text-gray-500 rounded-2xl border border-transparent outline-none cursor-not-allowed font-medium"
               />
-              {errors.recipient && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.recipient.message}
-                </p>
-              )}
             </div>
-
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 연락처
               </label>
               <input
                 type="text"
-                placeholder="010-0000-0000"
-                {...register("phone", { required: "연락처를 입력해주세요." })}
-                className="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                {...register("phone", { required: true })}
+                readOnly
+                className="w-full px-4 py-3.5 bg-gray-100 text-gray-500 rounded-2xl border border-transparent outline-none cursor-not-allowed font-medium"
               />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.phone.message}
-                </p>
-              )}
             </div>
-
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">
-                배송 주소
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                배송 주소 <span className="text-blue-500">*</span>
               </label>
-              <textarea
-                rows="3"
-                {...register("address", {
-                  required: "배송받으실 주소를 입력해주세요.",
-                })}
-                className="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              ></textarea>
+              <input
+                type="text"
+                {...register("address", { required: "배송지를 입력해주세요" })}
+                placeholder="상세 주소를 입력해주세요"
+                className="w-full px-4 py-3.5 bg-gray-50 rounded-2xl border border-gray-200 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-medium text-gray-900"
+              />
               {errors.address && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-red-500 text-sm mt-1.5 ml-1 font-medium">
                   {errors.address.message}
                 </p>
               )}
             </div>
           </form>
-        </div>
+        </section>
 
-        {/* 오른쪽: 주문 상품 요약 및 결제 버튼 */}
-        <div className="bg-gray-50 p-6 rounded-lg shadow border h-fit">
-          <h3 className="text-lg font-bold mb-4 text-gray-800">
-            주문 상품 요약
-          </h3>
-          <div className="space-y-3 mb-6 max-h-60 overflow-y-auto pr-2">
+        <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">주문 상품</h3>
+          <div className="space-y-4 mb-6">
             {items.map((item) => (
               <div
                 key={item.bookId}
-                className="flex justify-between items-center bg-white p-3 rounded border text-sm"
+                className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0"
               >
-                <span className="font-semibold truncate w-1/2">
-                  {item.title}
-                </span>
-                <span className="text-gray-500">x {item.quantity}</span>
-                <span className="font-bold text-blue-600">
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-900">{item.title}</span>
+                  <span className="text-sm text-gray-500">
+                    {item.quantity}개
+                  </span>
+                </div>
+                <span className="font-extrabold text-gray-800">
                   {(item.price * item.quantity).toLocaleString()}원
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="border-t pt-4 mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">상품 금액</span>
-              <span className="font-semibold">
+          <div className="bg-gray-50 p-5 rounded-2xl space-y-3 mb-6">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 font-medium">상품 금액</span>
+              <span className="font-bold text-gray-800">
                 {totalPrice.toLocaleString()}원
               </span>
             </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">배송비</span>
-              <span className="font-semibold">0원 (무료배송)</span>
-            </div>
-            <div className="flex justify-between items-center mt-4 pt-4 border-t">
-              <span className="text-lg font-bold text-gray-800">
+            <div className="border-t border-gray-200 pt-3 mt-1 flex justify-between items-center">
+              <span className="text-lg font-bold text-gray-900">
                 최종 결제 금액
               </span>
-              <span className="text-2xl font-bold text-red-600">
+              <span className="text-2xl font-extrabold text-blue-600">
                 {totalPrice.toLocaleString()}원
               </span>
             </div>
@@ -191,11 +177,13 @@ export default function OrderPage() {
             type="submit"
             form="orderForm"
             disabled={isSubmitting}
-            className={`w-full text-white font-bold py-3 px-4 rounded-lg transition shadow-md text-lg ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
+            className={`w-full text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-sm text-lg active:scale-[0.98] ${isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 hover:shadow-md"}`}
           >
-            {isSubmitting ? "처리 중..." : "결제하기"}
+            {isSubmitting
+              ? "결제 진행 중..."
+              : `${totalPrice.toLocaleString()}원 결제하기`}
           </button>
-        </div>
+        </section>
       </div>
     </div>
   );

@@ -7,11 +7,8 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 현재 로그인된 유저 정보를 가져옴
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUser(user);
-      }
+      if (user) setUser(user);
     });
   }, []);
 
@@ -21,33 +18,64 @@ export default function ProfilePage() {
   };
 
   if (!user)
-    return <div className="p-10 text-center">유저 정보를 불러오는 중...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] bg-gray-50">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-500 font-medium">유저 정보를 불러오는 중...</p>
+      </div>
+    );
 
   return (
-    <div className="container mx-auto p-6 max-w-lg">
-      <h2 className="text-2xl font-bold mb-6 border-b pb-2">고객 정보</h2>
-      <div className="bg-white p-6 rounded-lg shadow border space-y-4">
+    <div className="container mx-auto p-4 md:p-8 max-w-xl">
+      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-6">
+        고객 정보
+      </h2>
+
+      {/* 구형 디자인에서 토스 스타일 카드 레이아웃으로 변경 */}
+      <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">
+          <label className="block text-sm font-bold text-gray-700 mb-2">
             이메일
           </label>
-          <div className="p-3 bg-gray-100 rounded text-gray-800">
+          <div className="px-4 py-3.5 bg-gray-50 rounded-2xl text-gray-800 font-medium border border-gray-100">
             {user.email}
           </div>
         </div>
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">
+          <label className="block text-sm font-bold text-gray-700 mb-2">
+            이름
+          </label>
+          <div className="px-4 py-3.5 bg-gray-50 rounded-2xl text-gray-800 font-medium border border-gray-100">
+            {user.user_metadata?.full_name || "미등록 (정보 수정 필요)"}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">
+            연락처
+          </label>
+          <div className="px-4 py-3.5 bg-gray-50 rounded-2xl text-gray-800 font-medium border border-gray-100">
+            {user.user_metadata?.phone || "미등록 (정보 수정 필요)"}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">
             가입 일자
           </label>
-          <div className="p-3 bg-gray-100 rounded text-gray-800">
+          <div className="px-4 py-3.5 bg-gray-50 rounded-2xl text-gray-800 font-medium border border-gray-100">
             {new Date(user.created_at).toLocaleDateString("ko-KR")}
           </div>
         </div>
 
-        <div className="pt-4 mt-6 border-t">
+        <div className="pt-4 flex gap-3">
+          <button
+            onClick={() => navigate("/profile-edit")}
+            className="w-1/2 bg-blue-50 text-blue-600 font-bold py-4 rounded-2xl hover:bg-blue-100 transition-colors active:scale-95"
+          >
+            정보 수정
+          </button>
           <button
             onClick={handleLogout}
-            className="w-full bg-red-50 text-red-600 border border-red-200 font-bold py-2 rounded hover:bg-red-100 cursor-pointer transition"
+            className="w-1/2 bg-red-50 text-red-500 font-bold py-4 rounded-2xl hover:bg-red-100 transition-colors active:scale-95"
           >
             로그아웃
           </button>
