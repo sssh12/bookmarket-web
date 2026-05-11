@@ -1,68 +1,94 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { supabase } from "../supabaseClient.js";
+import api from "../../api/axios.js";
 
-export const useCartStore = create(
-  persist(
-    (set, get) => ({
-      items: [],
+// 장바구니 데이터를 상태로 관리하고 서버와 동기화하는 Zustand 스토어
+export const useCartStore = create((set, get) => ({
+  items: [],
 
-      // 1. 장바구니에 책 추가
-      addToCart: (book) => {
-        const currentItems = get().items;
-        const existingItem = currentItems.find(
-          (item) => item.bookId === book.bookId,
-        );
+  fetchCart: async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      set({ items: [] });
+      return;
+    }
 
-        if (existingItem) {
-          // 이미 있는 책이면 수량(quantity)만 1 증가
-          set({
-            items: currentItems.map((item) =>
-              item.bookId === book.bookId
-                ? { ...item, quantity: item.quantity + 1 }
-                : item,
-            ),
-          });
-        } else {
-          // 없는 책이면 수량 1로 새로 추가
-          set({ items: [...currentItems, { ...book, quantity: 1 }] });
-        }
-      },
+    try {
+      const response = await api.get(`/api/carts?email=${session.user.email}`);
+      set({ items: response.data || [] });
+    } catch (error) {
+      console.error("장바구니 조회 실패:", error);
+    }
+  },
 
-      // 2. 장바구니에서 특정 책 완전 삭제
-      removeFromCart: (bookId) => {
-        set({
-          items: get().items.filter((item) => item.bookId !== bookId),
-        });
-      },
+  syncCartToDB: async (newItems) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
 
-      // 3. 특정 책의 수량 증감 처리
-      updateQuantity: (bookId, amount) => {
-        const currentItems = get().items;
-        set({
-          items: currentItems.map((item) => {
-            if (item.bookId === bookId) {
-              const newQuantity = item.quantity + amount;
-              // 수량은 최소 1이어야 함
-              return { ...item, quantity: Math.max(1, newQuantity) };
-            }
-            return item;
-          }),
-        });
-      },
+    try {
+      await api.post("/api/carts/sync", {
+        userEmail: session.user.email,
+        userName: session.user.user_metadata?.full_name || "회원",
+        items: newItems.map((item) => ({
+          bookId: item.bookId,
+          quantity: item.quantity,
+        })),
+      });
+    } catch (error) {
+      console.error("장바구니 동기화 실패:", error);
+      get().fetchCart(); // 에러 시 롤백
+    }
+  },
 
-      // 4. 장바구니 전체 비우기
-      clearCart: () => set({ items: [] }),
+  addToCart: (book) => {
+    const currentItems = get().items;
+    const existingItem = currentItems.find(
+      (item) => item.bookId === book.bookId,
+    );
 
-      // 5. 총 결제 금액 계산 (선택적 편의 함수)
-      getTotalPrice: () => {
-        return get().items.reduce(
-          (total, item) => total + item.price * item.quantity,
-          0,
-        );
-      },
-    }),
-    {
-      name: "bookmarket-cart-storage", // 로컬 스토리지에 저장될 키 이름
-    },
-  ),
-);
+    let newItems;
+    if (existingItem) {
+      newItems = currentItems.map((item) =>
+        item.bookId === book.bookId
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      );
+    } else {
+      newItems = [...currentItems, { ...book, quantity: 1 }];
+    }
+
+    set({ items: newItems });
+    get().syncCartToDB(newItems);
+  },
+
+  removeFromCart: (bookId) => {
+    const newItems = get().items.filter((item) => item.bookId !== bookId);
+    set({ items: newItems });
+    get().syncCartToDB(newItems);
+  },
+
+  updateQuantity: (bookId, delta) => {
+    const newItems = get().items.map((item) => {
+      if (item.bookId === bookId) {
+        return { ...item, quantity: Math.max(1, item.quantity + delta) };
+      }
+      return item;
+    });
+
+    set({ items: newItems });
+    get().syncCartToDB(newItems);
+  },
+
+  clearCart: () => {
+    set({ items: [] });
+    get().syncCartToDB([]); // 이건 사용자가 "전체 비우기" 버튼을 누를 때만 사용
+  },
+
+  clearCartLocal: () => {
+    set({ items: [] });
+  },
+}));

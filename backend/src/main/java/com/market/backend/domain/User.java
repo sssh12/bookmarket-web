@@ -14,33 +14,46 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId; // user_id BIGINT
+    private Long userId;
+
+    @Column(unique = true, nullable = false)
+    private String email;
 
     @Column(nullable = false)
-    private String email; // email VARCHAR(45)
+    private String password;
 
     @Column(nullable = false)
-    private String password; // password VARCHAR(255) (암호화되어 저장될 예정)
-
-    @Column(nullable = false)
-    private String name; // name VARCHAR(50)
-
-    private String phoneNumber; // phone_number VARCHAR(20)
-    private String address; // address VARCHAR(255)
+    private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role; // role VARCHAR(20) (ADMIN or USER)
+    private Role role;
+
+    private String address;
+
+    // [수정] 기존에 존재하는 phone_number 컬럼과 자동 매핑되도록 카멜 케이스 적용
+    private String phoneNumber;
 
     @Column(updatable = false)
-    private LocalDateTime createdAt; // created_at TIMESTAMP
+    private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
-    
+
     public enum Role {
         USER, ADMIN
+    }
+
+    public void updateAddress(String address) {
+        this.address = address;
+    }
+
+    // [수정] phoneNumber를 받도록 파라미터 수정
+    public void updateProfile(String name, String phoneNumber, String address) {
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
     }
 }

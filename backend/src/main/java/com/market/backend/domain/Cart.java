@@ -2,6 +2,9 @@ package com.market.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +20,8 @@ public class Cart {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    // [리팩토링] DB 물리 레벨에서 ON DELETE CASCADE 적용
+    @OnDelete(action = OnDeleteAction.CASCADE) 
     private User user;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -1,5 +1,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { useCartStore } from "../store/cartStore.jsx";
+import { useWishlistStore } from "../store/wishlistStore.jsx";
 import { supabase } from "../supabaseClient.js";
 
 export default function Navbar({ session }) {
@@ -8,18 +10,36 @@ export default function Navbar({ session }) {
     (total, item) => total + (item.quantity || 1),
     0,
   );
+
+  // 로그인 시 DB에서 데이터 끌어오는 함수와 로그아웃 시 비우는 함수 가져오기
+  const fetchCart = useCartStore((state) => state.fetchCart);
+  const clearCartLocal = useCartStore((state) => state.clearCartLocal);
+
+  const wishlistCount = useWishlistStore((state) => state.wishlist.length);
+  const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
+
+  useEffect(() => {
+    if (session) {
+      // 로그인 시 찜하기와 장바구니를 DB에서 확실하게 불러옴
+      fetchWishlist();
+      fetchCart();
+    }
+  }, [session, fetchWishlist, fetchCart]);
+
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    // 로그아웃 시 화면의 장바구니와 찜 상태 초기화 (DB 데이터는 안전하게 보존됨)
+    clearCartLocal();
+    useWishlistStore.setState({ wishlist: [] });
     navigate("/");
   };
 
   const isAdmin = session?.user?.email === "admin@test.com";
 
-  // ESLint 경고(no-useless-assignment) 해결 및 relatedPaths 찜한 상품 로직 유지
   const getMenuClass = (path, isSubMenu = false, relatedPaths = []) => {
     const isActive =
       path === "/"
@@ -59,9 +79,14 @@ export default function Navbar({ session }) {
               <div className="relative group cursor-pointer">
                 <Link
                   to="/profile"
-                  className={getMenuClass("/profile", false, ["/wishlist"])}
+                  className={`${getMenuClass("/profile", false, ["/wishlist"])} flex items-center gap-1.5`}
                 >
                   고객 정보
+                  {wishlistCount > 0 && (
+                    <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {wishlistCount}
+                    </span>
+                  )}
                 </Link>
                 <div className="absolute top-14 left-0 w-40 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 ease-out z-50">
                   <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 flex flex-col overflow-hidden">
@@ -79,9 +104,14 @@ export default function Navbar({ session }) {
                     </Link>
                     <Link
                       to="/wishlist"
-                      className={getMenuClass("/wishlist", true)}
+                      className={`${getMenuClass("/wishlist", true)} flex justify-between items-center`}
                     >
-                      찜한 상품
+                      <span>찜한 상품</span>
+                      {wishlistCount > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {wishlistCount}
+                        </span>
+                      )}
                     </Link>
                     <button
                       onClick={handleLogout}
@@ -184,22 +214,22 @@ export default function Navbar({ session }) {
               {/* 5. 관리자 메뉴 */}
               {isAdmin && (
                 <div className="relative group cursor-pointer">
-                  <Link to="/admin" className={getMenuClass("/admin")}>
+                  <Link to="/admin/books" className={getMenuClass("/admin")}>
                     관리자
                   </Link>
                   <div className="absolute top-14 left-0 w-40 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 ease-out z-50">
                     <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 flex flex-col overflow-hidden">
                       <Link
-                        to="/admin"
-                        className={getMenuClass("/admin", true)}
-                      >
-                        신규 도서 등록
-                      </Link>
-                      <Link
                         to="/admin/books"
                         className={getMenuClass("/admin/books", true)}
                       >
                         도서 관리
+                      </Link>
+                      <Link
+                        to="/admin"
+                        className={getMenuClass("/admin", true)}
+                      >
+                        신규 도서 등록
                       </Link>
                     </div>
                   </div>
@@ -214,15 +244,15 @@ export default function Navbar({ session }) {
           <div className="flex items-center gap-4">
             {isAdmin ? (
               <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200 shadow-sm cursor-help">
-                <span className="text-sm">👑</span>
+                <span className="text-sm">⚙️</span>
                 <span className="text-xs font-bold text-yellow-700">
-                  관리자 모드
+                  관리자
                 </span>
               </div>
             ) : (
               <Link
                 to="/profile"
-                className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors shadow-sm cursor-pointer"
+                className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors shadow-sm cursor-pointer relative"
               >
                 <span className="text-sm">👤</span>
                 <span className="text-xs font-bold text-gray-600 line-clamp-1 max-w-20">

@@ -1,10 +1,13 @@
 import { useForm } from "react-hook-form";
 import api from "../../api/axios.js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../supabaseClient.js";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function AdminPage() {
+export default function AdminBookEditPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  // 실시간 에러 출력을 위한 mode: "onChange" 적용
   const {
     register,
     handleSubmit,
@@ -13,15 +16,61 @@ export default function AdminPage() {
   } = useForm({
     mode: "onChange",
   });
-  const navigate = useNavigate();
+
   const [uploading, setUploading] = useState(false);
+  const [existingImage, setExistingImage] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
+
+  useEffect(() => {
+    const fetchBookData = async () => {
+      try {
+        const response = await api.get(`/api/books/${id}`);
+        const bookData = response.data;
+
+        const categoryMap = {
+          "소설/시/희곡": "1",
+          "IT/모바일": "2",
+          "경제/경영": "3",
+          "인문/사회": "4",
+          자기계발: "5",
+          과학: "6",
+          "만화/라이트노벨": "7",
+        };
+        const categoryId = categoryMap[bookData.categoryName] || "";
+
+        reset({
+          title: bookData.title,
+          author: bookData.author,
+          publisher: bookData.publisher,
+          price: bookData.price,
+          origin: bookData.origin,
+          categoryId: categoryId,
+          publishedAt: bookData.publishedAt
+            ? bookData.publishedAt.split("T")[0]
+            : "",
+          isbn: bookData.isbn,
+          description: bookData.description,
+        });
+
+        setExistingImage(bookData.coverImageUrl);
+      } catch (error) {
+        console.error("도서 정보 불러오기 실패:", error);
+        alert("도서 정보를 불러오는 중 오류가 발생했습니다.");
+        navigate("/admin/books");
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    fetchBookData();
+  }, [id, reset, navigate]);
 
   const onSubmit = async (data) => {
     try {
       setUploading(true);
-      let coverImageUrl = null;
+      let coverImageUrl = existingImage;
 
-      if (data.imageFile && data.imageFile[0]) {
+      if (data.imageFile && data.imageFile.length > 0) {
         const file = data.imageFile[0];
         const fileExt = file.name.split(".").pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -42,7 +91,7 @@ export default function AdminPage() {
         coverImageUrl = publicUrlData.publicUrl;
       }
 
-      const newBook = {
+      const updatedBook = {
         title: data.title,
         author: data.author,
         publisher: data.publisher,
@@ -55,14 +104,13 @@ export default function AdminPage() {
         coverImageUrl: coverImageUrl,
       };
 
-      await api.post("/api/books", newBook);
+      await api.put(`/api/books/${id}`, updatedBook);
 
-      alert("✅ 신규 도서가 성공적으로 등록되었습니다!");
-      reset();
+      alert("✅ 도서 정보가 성공적으로 수정되었습니다!");
       navigate("/admin/books");
     } catch (error) {
       console.error(error);
-      alert("도서 등록 중 오류가 발생했습니다.");
+      alert("도서 수정 중 오류가 발생했습니다.");
     } finally {
       setUploading(false);
     }
@@ -75,12 +123,18 @@ export default function AdminPage() {
     );
   };
 
+  if (loadingData)
+    return (
+      <div className="text-center mt-20 font-bold text-gray-500">
+        데이터를 불러오는 중...⏳
+      </div>
+    );
   const isLoading = isSubmitting || uploading;
 
   return (
     <div className="container mx-auto p-4 md:p-8 max-w-4xl">
       <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-8">
-        신규 도서 등록
+        도서 정보 수정
       </h2>
 
       <form
@@ -233,7 +287,7 @@ export default function AdminPage() {
 
           <div className="md:col-span-2">
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              도서 이미지 업로드{" "}
+              도서 이미지{" "}
               <span className="text-gray-400 font-normal ml-1">(선택)</span>
             </label>
             <input
@@ -242,6 +296,11 @@ export default function AdminPage() {
               {...register("imageFile")}
               className="w-full px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-200 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer"
             />
+            {existingImage && (
+              <p className="text-xs text-blue-500 mt-2 font-bold">
+                ✓ 현재 이미지가 등록되어 있습니다.
+              </p>
+            )}
           </div>
 
           <div className="md:col-span-2">
@@ -257,21 +316,30 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`w-full text-white font-bold py-4 mt-8 rounded-2xl transition-all duration-200 text-lg shadow-sm cursor-pointer ${
-            isLoading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
-          }`}
-        >
-          {uploading
-            ? "이미지 업로드 중..."
-            : isSubmitting
-              ? "데이터 저장 중..."
-              : "도서 등록하기"}
-        </button>
+        <div className="flex gap-4 mt-8">
+          <button
+            type="button"
+            onClick={() => navigate("/admin/books")}
+            className="w-1/3 text-gray-600 font-bold py-4 rounded-2xl transition-all duration-200 text-lg bg-gray-100 hover:bg-gray-200 active:scale-[0.98] cursor-pointer"
+          >
+            취소
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-2/3 text-white font-bold py-4 rounded-2xl transition-all duration-200 text-lg shadow-sm cursor-pointer ${
+              isLoading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
+            }`}
+          >
+            {uploading
+              ? "이미지 업로드 중..."
+              : isSubmitting
+                ? "수정 중..."
+                : "수정 완료"}
+          </button>
+        </div>
       </form>
     </div>
   );

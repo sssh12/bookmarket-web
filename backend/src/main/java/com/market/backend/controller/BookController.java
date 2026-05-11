@@ -1,8 +1,8 @@
 package com.market.backend.controller;
 
+import com.market.backend.dto.BookRequestDto;
 import com.market.backend.dto.BookResponseDto;
 import com.market.backend.service.BookService;
-import com.market.backend.dto.BookRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,19 +18,30 @@ public class BookController {
 
     @GetMapping
     public ResponseEntity<List<BookResponseDto>> getAllBooks() {
-        List<BookResponseDto> books = bookService.getAllBooks();
-        return ResponseEntity.ok(books);
+        return ResponseEntity.ok(bookService.getAllBooks());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookResponseDto> getBook(@PathVariable("id") Long id) {
-        BookResponseDto book = bookService.getBookById(id);
-        return ResponseEntity.ok(book);
+    public ResponseEntity<BookResponseDto> getBookById(@PathVariable Long id) {
+        return ResponseEntity.ok(bookService.getBookById(id));
     }
 
-     @PostMapping
+    @PostMapping
     public ResponseEntity<Void> createBook(@RequestBody BookRequestDto requestDto) {
         bookService.createBook(requestDto);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateBook(@PathVariable Long id, @RequestBody BookRequestDto requestDto) {
+        bookService.updateBook(id, requestDto);
+        return ResponseEntity.ok().build();
+    }
+
+    // [기능 추가] 도서 삭제 엔드포인트
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
+        bookService.deleteBook(id);
         return ResponseEntity.ok().build();
     }
 }

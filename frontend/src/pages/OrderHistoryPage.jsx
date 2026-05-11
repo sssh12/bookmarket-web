@@ -8,8 +8,6 @@ export default function OrderHistoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 향후 백엔드의 GET /api/orders/{userEmail} API가 구현되면 실제로 데이터를 불러오게 될 로직
-    // 현재는 API가 없으므로 프론트엔드 UI/UX 골격만 잡아둠.
     const fetchOrders = async () => {
       try {
         const {
@@ -17,12 +15,18 @@ export default function OrderHistoryPage() {
         } = await supabase.auth.getSession();
         if (!session) return;
 
-        // 백엔드 API가 완성되면 아래 주석을 해제하여 사용
-        // const response = await api.get(`/api/orders?email=${session.user.email}`);
-        // setOrders(response.data);
+        // 임시 빈 배열 로직에서 실제 API 연동으로 수정 (백엔드 추가 개발 필요)
+        // 백엔드에 OrderController에 GET /api/orders?email={email} 엔드포인트가 생겼다는 가정 하에 활성화
+        const response = await api.get(
+          `/api/orders?email=${session.user.email}`,
+        );
 
-        // 임시 빈 데이터 처리 (UI 확인용)
-        setOrders([]);
+        // 응답이 정상 배열이면 세팅, 에러 방어 코드 추가
+        if (Array.isArray(response.data)) {
+          setOrders(response.data);
+        } else {
+          setOrders([]);
+        }
       } catch (error) {
         console.error("주문 내역 조회 실패:", error);
       } finally {
@@ -46,26 +50,20 @@ export default function OrderHistoryPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8 max-w-4xl">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-8">
+      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-8">
         주문 내역
       </h2>
 
       {orders.length === 0 ? (
         <div className="bg-white rounded-3xl p-10 shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[40vh]">
-          <div className="text-5xl mb-4">📦</div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
-            주문 내역이 없습니다
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+            <span className="text-3xl">📦</span>
+          </div>
+          <h3 className="text-lg font-bold text-gray-800 mb-2">
+            아직 주문한 내역이 없어요
           </h3>
-          <p className="text-gray-500 mb-6 text-center">
-            아직 주문하신 상품이 없네요.
-            <br />
-            마음에 드는 도서를 찾아보세요!
-          </p>
-          <Link
-            to="/books"
-            className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-colors active:scale-95 shadow-sm"
-          >
-            도서 목록 보러가기
+          <Link to="/books" className="text-blue-600 font-bold hover:underline">
+            상품 둘러보기
           </Link>
         </div>
       ) : (
@@ -77,7 +75,7 @@ export default function OrderHistoryPage() {
             >
               <div className="flex justify-between items-center border-b border-gray-50 pb-4 mb-4">
                 <span className="text-sm font-bold text-gray-500">
-                  {order.createdAt}
+                  주문번호: {order.orderId}
                 </span>
                 <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                   주문완료
@@ -85,14 +83,17 @@ export default function OrderHistoryPage() {
               </div>
               <div className="flex flex-col gap-2">
                 <h4 className="text-lg font-bold text-gray-900">
-                  {order.title} 등 {order.items.length}건
+                  {order.items && order.items.length > 0
+                    ? `${order.items[0].title} 외 ${order.items.length - 1}건`
+                    : "주문 상품"}
                 </h4>
                 <p className="text-gray-500">
                   결제 금액:{" "}
-                  <span className="font-extrabold text-gray-900">
-                    {order.totalPrice.toLocaleString()}원
+                  <span className="font-bold text-gray-900">
+                    {order.totalPrice?.toLocaleString()}원
                   </span>
                 </p>
+                <p className="text-sm text-gray-400">배송지: {order.address}</p>
               </div>
             </div>
           ))}

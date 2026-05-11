@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../supabaseClient.js";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
-// 멘토링 반영: 요구사항에 맞춘 견고한 Zod 스키마 정의 (비밀번호 확인, 이름, 연락처 필수)
+// 요구사항에 맞춘 견고한 Zod 스키마 정의
 const loginSchema = z.object({
   email: z.string().email({ message: "올바른 이메일 형식을 입력해주세요." }),
   password: z
@@ -76,8 +76,8 @@ export default function AuthPage() {
 
         if (error) throw error;
 
-        setGlobalMessage("가입 완료! 인증 이메일을 확인해 주세요.");
-        alert("회원가입이 완료되었습니다. 이메일을 확인해주세요.");
+        setGlobalMessage("회원가입이 완료되었습니다.");
+        alert("회원가입이 완료되었습니다.");
         setIsLogin(true);
         reset();
       }
@@ -105,14 +105,10 @@ export default function AuthPage() {
   };
 
   return (
-    // 멘토링 반영: 전체 화면을 덮는 화이트 톤과 중앙 집중형 카드 레이아웃 (토스 느낌)
     <div className="min-h-[85vh] flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-4xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-        {/* 상단 로고 및 타이틀 */}
+        {/* 상단 타이틀 */}
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4">
-            📚
-          </div>
           <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
             {isLogin ? "환영합니다" : "회원 가입"}
           </h2>
@@ -131,6 +127,28 @@ export default function AuthPage() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* 공통 이메일 필드 */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              이메일
+            </label>
+            <input
+              type="email"
+              placeholder="example@email.com"
+              {...register("email")}
+              className={`w-full px-4 py-3.5 bg-gray-50 rounded-2xl border outline-none transition-all font-medium focus:bg-white focus:ring-4 focus:ring-blue-50 ${
+                errors.email
+                  ? "border-red-300 focus:border-red-500"
+                  : "border-gray-200 focus:border-blue-500"
+              }`}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1.5 ml-1 font-bold">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
           {/* 회원가입 시에만 보이는 이름/연락처 필드 */}
           {!isLogin && (
             <>
@@ -177,27 +195,6 @@ export default function AuthPage() {
               </div>
             </>
           )}
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              이메일
-            </label>
-            <input
-              type="email"
-              placeholder="example@email.com"
-              {...register("email")}
-              className={`w-full px-4 py-3.5 bg-gray-50 rounded-2xl border outline-none transition-all font-medium focus:bg-white focus:ring-4 focus:ring-blue-50 ${
-                errors.email
-                  ? "border-red-300 focus:border-red-500"
-                  : "border-gray-200 focus:border-blue-500"
-              }`}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1.5 ml-1 font-bold">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
 
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">

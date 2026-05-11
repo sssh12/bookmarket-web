@@ -9,13 +9,14 @@ public record BookResponseDto(
         String author,
         String publisher,
         Integer price,
-        Integer stock,
         String isbn,
         String description,
         String coverImageUrl,
+        // [리팩토링] 순서가 꼬이지 않게 명확히 배치
+        String origin,       
+        String categoryName, 
         LocalDateTime publishedAt
 ) {
-    // Entity를 DTO로 변환하는 정적 팩토리 메서드
     public static BookResponseDto from(Book book) {
         return new BookResponseDto(
                 book.getBookId(),
@@ -23,10 +24,12 @@ public record BookResponseDto(
                 book.getAuthor(),
                 book.getPublisher(),
                 book.getPrice(),
-                book.getStock(),
                 book.getIsbn(),
                 book.getDescription(),
                 book.getCoverImageUrl(),
+                // [리팩토링] record 선언 순서에 맞춰 정확하게 매핑
+                book.getOrigin() != null ? book.getOrigin().name() : "미지정", 
+                book.getCategory() != null ? book.getCategory().getCategoryName() : "분야 미지정",
                 book.getPublishedAt()
         );
     }

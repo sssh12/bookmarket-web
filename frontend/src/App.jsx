@@ -5,9 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useEffect, useState } from "react";
-import api from "../api/axios"; // 멘토링 반영: 전역 axios 인스턴스 임포트
 import { supabase } from "./supabaseClient";
-import { useCartStore } from "./store/cartStore";
 
 import Navbar from "./components/Navbar";
 import BookList from "./pages/BookList";
@@ -18,8 +16,6 @@ import AdminPage from "./pages/AdminPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PlaceholderPage from "./pages/PlaceholderPage";
-
-// 새롭게 추가되는 하위 메뉴 페이지들 임포트
 import ProfileEditPage from "./pages/ProfileEditPage";
 import WishlistPage from "./pages/WishlistPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
@@ -28,12 +24,14 @@ import NewBookPage from "./pages/NewBookPage";
 import DomesticBookPage from "./pages/DomesticBookPage";
 import ForeignBookPage from "./pages/ForeignBookPage";
 import AdminBookListPage from "./pages/AdminBookListPage";
+import AdminBookEditPage from "./pages/AdminBookEditPage";
 
+// 애플리케이션 최상위 컴포넌트임 (라우팅 및 세션 검사 담당)
 function App() {
-  const cartItems = useCartStore((state) => state.items);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  // 1. 세션을 가져오는 첫번째 useEffect는 남겨둡니다.
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -47,29 +45,6 @@ function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (session?.user) {
-      const syncToDB = async () => {
-        try {
-          // 멘토링 반영: baseURL이 설정된 api 객체를 사용하여 중복된 도메인 주소 제거
-          await api.post("/api/cart/sync", {
-            userEmail: session.user.email,
-            userName:
-              session.user.user_metadata?.full_name ||
-              session.user.email.split("@")[0],
-            items: cartItems.map((item) => ({
-              bookId: item.bookId,
-              quantity: item.quantity,
-            })),
-          });
-        } catch (error) {
-          console.error("장바구니 DB 동기화 실패:", error);
-        }
-      };
-      syncToDB();
-    }
-  }, [cartItems, session]);
 
   if (authLoading)
     return (
@@ -116,6 +91,10 @@ function App() {
             <Route element={<ProtectedRoute requireAdmin={true} />}>
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/admin/books" element={<AdminBookListPage />} />
+              <Route
+                path="/admin/books/edit/:id"
+                element={<AdminBookEditPage />}
+              />
             </Route>
           </Routes>
         </main>

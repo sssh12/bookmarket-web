@@ -2,6 +2,9 @@ package com.market.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +21,10 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
 
-    // 주문자 정보 매핑 (user_tb 활용)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    // [리팩토링] DB 물리 레벨에서 ON DELETE CASCADE 적용
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(nullable = false)
@@ -29,29 +33,39 @@ public class Order {
     @Column(nullable = false)
     private String phone;
 
-    @Column(nullable = false)
+    // [리팩토링] ERD 명칭(delivery_address) 매핑
+    @Column(name = "delivery_address", nullable = false)
     private String address;
 
     @Column(nullable = false)
     private Integer totalPrice;
 
-    // 일대다(1:N) 관계: 하나의 주문은 여러 주문 상품을 가짐.
-    // cascade = CascadeType.ALL을 통해 주문 저장 시 주문 상품도 함께 자동 저장
+    // [리팩토링] ERD에 존재하는 주문 상태값 추가
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", nullable = false)
+    @Builder.Default
+    private OrderStatus status = OrderStatus.PENDING;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
+    // [리팩토링] ERD 명칭(order_date) 매핑 및 이름 변경
+    @Column(name = "order_date", updatable = false)
+    private LocalDateTime orderDate;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.orderDate = LocalDateTime.now();
+    }
+    
+    // 상태값 관리를 위한 Enum 추가
+    public enum OrderStatus {
+        PENDING, PAID, SHIPPING, DELIVERED, CANCELLED
     }
 
-    // 연관관계 편의 메서드 (Order 저장 시 하위 Item들도 연결)
     public void addOrderItem(OrderItem orderItem) {
-        this.items.add(orderItem);
+        items.add(orderItem);
         orderItem.setOrder(this);
     }
 }

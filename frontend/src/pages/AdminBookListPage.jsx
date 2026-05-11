@@ -1,23 +1,53 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axios";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminBookListPage() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // 기존 도서 목록 API 재활용 (관리자 전용 API가 있다면 교체)
+  const fetchBooks = () => {
     api
       .get("/api/books")
       .then((res) => {
-        setBooks(res.data);
+        // [개선 2] 데이터를 받아온 직후 bookId 기준으로 오름차순(최신순) 정렬 처리
+        const sortedBooks = res.data.sort((a, b) => a.bookId - b.bookId);
+        setBooks(sortedBooks);
         setLoading(false);
       })
       .catch((err) => {
         console.error("도서 로딩 실패:", err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchBooks();
   }, []);
+
+  const handleDelete = async (id, title) => {
+    if (
+      window.confirm(
+        `[${title}] 도서를 정말 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+      )
+    ) {
+      try {
+        await api.delete(`/api/books/${id}`);
+        setBooks((prevBooks) => prevBooks.filter((book) => book.bookId !== id));
+        alert("성공적으로 삭제되었습니다.");
+      } catch (err) {
+        console.error("도서 삭제 실패:", err);
+        alert("도서 삭제 중 오류가 발생했습니다.");
+      }
+    }
+  };
+
+  const getOriginLabel = (origin) => {
+    if (origin === "DOMESTIC") return "국내";
+    if (origin === "FOREIGN") return "해외";
+    return "-";
+  };
 
   if (loading) {
     return (
@@ -51,8 +81,8 @@ export default function AdminBookListPage() {
                 <th className="p-4 text-sm font-bold text-gray-600 w-32 text-right">
                   가격
                 </th>
-                <th className="p-4 text-sm font-bold text-gray-600 w-24 text-center">
-                  재고
+                <th className="p-4 text-sm font-bold text-gray-600 w-32 text-center">
+                  구분/분야
                 </th>
                 <th className="p-4 text-sm font-bold text-gray-600 w-40 text-center">
                   관리
@@ -73,14 +103,27 @@ export default function AdminBookListPage() {
                   <td className="p-4 text-right font-bold text-blue-600">
                     {book.price?.toLocaleString()}원
                   </td>
-                  <td className="p-4 text-center font-medium text-gray-700">
-                    {book.stock}
+                  <td className="p-4 text-center">
+                    <span className="block text-xs font-bold text-purple-600 bg-purple-50 rounded-md py-0.5 mb-1">
+                      {getOriginLabel(book.origin)}
+                    </span>
+                    <span className="block text-xs font-medium text-blue-600 bg-blue-50 rounded-md py-0.5">
+                      {book.categoryName || "미지정"}
+                    </span>
                   </td>
                   <td className="p-4 flex justify-center gap-2">
-                    <button className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                    <button
+                      onClick={() =>
+                        navigate(`/admin/books/edit/${book.bookId}`)
+                      }
+                      className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+                    >
                       수정
                     </button>
-                    <button className="bg-red-50 text-red-500 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                    <button
+                      onClick={() => handleDelete(book.bookId, book.title)}
+                      className="bg-red-50 text-red-500 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+                    >
                       삭제
                     </button>
                   </td>
