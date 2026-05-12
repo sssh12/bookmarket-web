@@ -4,8 +4,8 @@ import { supabase } from "../supabaseClient.js";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { toast } from "sonner";
 
-// 요구사항에 맞춘 견고한 Zod 스키마 정의
 const loginSchema = z.object({
   email: z.string().email({ message: "올바른 이메일 형식을 입력해주세요." }),
   password: z
@@ -77,14 +77,14 @@ export default function AuthPage() {
         if (error) throw error;
 
         setGlobalMessage("회원가입이 완료되었습니다.");
-        alert("회원가입이 완료되었습니다.");
+        toast.success("회원가입이 완료되었습니다.");
         setIsLogin(true);
         reset();
       }
     } catch (error) {
       setGlobalMessage("");
       console.error(error);
-      alert(`[오류] ${error.message}`);
+      toast.error(`[오류] ${error.message}`);
     }
   };
 
@@ -100,7 +100,7 @@ export default function AuthPage() {
       if (error) throw error;
     } catch (error) {
       console.error("구글 로그인 실패:", error.message);
-      alert("구글 로그인 중 문제가 발생했습니다.");
+      toast.error("구글 로그인 중 문제가 발생했습니다.");
     }
   };
 

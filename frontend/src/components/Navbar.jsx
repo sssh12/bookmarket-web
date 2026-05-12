@@ -32,7 +32,7 @@ export default function Navbar({ session }) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // 로그아웃 시 화면의 장바구니와 찜 상태 초기화 (DB 데이터는 안전하게 보존됨)
+    // 로그아웃 시 화면의 장바구니와 찜 상태 초기화
     clearCartLocal();
     useWishlistStore.setState({ wishlist: [] });
     navigate("/");

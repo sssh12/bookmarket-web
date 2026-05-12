@@ -3,6 +3,7 @@ import api from "../../api/axios.js";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient.js";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function AdminPage() {
   const {
@@ -57,12 +58,12 @@ export default function AdminPage() {
 
       await api.post("/api/books", newBook);
 
-      alert("✅ 신규 도서가 성공적으로 등록되었습니다!");
+      toast.success("신규 도서가 성공적으로 등록되었습니다!");
       reset();
       navigate("/admin/books");
     } catch (error) {
       console.error(error);
-      alert("도서 등록 중 오류가 발생했습니다.");
+      toast.error("도서 등록 중 오류가 발생했습니다.");
     } finally {
       setUploading(false);
     }
@@ -70,7 +71,7 @@ export default function AdminPage() {
 
   const onError = (errors) => {
     console.error("폼 검증 실패:", errors);
-    alert(
+    toast.error(
       "입력되지 않은 필수 항목이 있거나 입력 형식이 올바르지 않습니다.\n화면의 붉은색 경고 메시지를 확인해주세요.",
     );
   };

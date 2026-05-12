@@ -3,6 +3,7 @@ import { useCartStore } from "../store/cartStore.jsx";
 import api from "../../api/axios.js";
 import { supabase } from "../supabaseClient.js";
 import { useNavigate, Navigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function OrderPage() {
   const { items, clearCart } = useCartStore();
@@ -14,6 +15,9 @@ export default function OrderPage() {
   const [saveAsDefault, setSaveAsDefault] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+
+  // 결제 완료 상태를 추적하여 Navigate 컴포넌트 렌더링 충돌을 막는 플래그
+  const [isOrderComplete, setIsOrderComplete] = useState(false);
 
   const totalPrice = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -54,21 +58,29 @@ export default function OrderPage() {
     fetchUserData();
   }, []);
 
-  if (items.length === 0) {
+  useEffect(() => {
+    // 결제가 정상적으로 완료되어 items가 0이 된 경우는 에러 토스트를 띄우지 않음
+    if (items.length === 0 && !isOrderComplete) {
+      toast.error("장바구니가 비어있습니다.", { id: "empty-cart-error" });
+    }
+  }, [items.length, isOrderComplete]);
+
+  // 결제가 진행/완료된 상태라면 뒤로 튕겨내지 않고 흐름 유지
+  if (items.length === 0 && !isOrderComplete) {
     return <Navigate to="/cart" replace />;
   }
 
   const handleOrder = async () => {
     if (!recipient.trim()) {
-      alert("수령인을 입력해주세요.");
+      toast.error("수령인을 입력해주세요.");
       return;
     }
     if (!phone.trim()) {
-      alert("연락처를 입력해주세요.");
+      toast.error("연락처를 입력해주세요.");
       return;
     }
     if (!shippingAddress.trim()) {
-      alert("배송지 주소를 입력해주세요.");
+      toast.error("배송지 주소를 입력해주세요.");
       return;
     }
 
@@ -90,7 +102,7 @@ export default function OrderPage() {
         shippingAddress: shippingAddress,
         items: items.map((item) => ({
           bookId: item.bookId,
-          // [버그 수정 3] 구버전 로컬스토리지 캐시로 인해 title이나 price가 없을 경우를 대비한 방어 코드
+          // 구버전 캐시 방어 코드 유지
           title: item.title || "도서명 누락 (이전 데이터)",
           quantity: item.quantity,
           price: item.price || 0,
@@ -99,20 +111,27 @@ export default function OrderPage() {
 
       await api.post("/api/orders", orderData);
 
-      alert("주문이 성공적으로 완료되었습니다!");
+      // 결제 완료 플래그를 true로 변경하여 화면 튕김(Navigate) 방지
+      setIsOrderComplete(true);
+
+      // 스토어 함수 호출 (cartStore에서 백엔드 동기화 로직이 추가되어 있어야 함)
       clearCart();
+
+      toast.success("결제가 완료되었습니다. 주문내역에서 확인해주세요.");
       navigate("/order-history");
     } catch (error) {
       console.error("주문 실패:", error);
-      alert("주문 처리 중 오류가 발생했습니다.");
+      toast.error(
+        "주문 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-3xl">
-      <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-8">
+    <div className="container mx-auto p-4 md:p-8 max-w-7xl">
+      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-8">
         주문/결제
       </h2>
 

@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { useCartStore } from "../store/cartStore";
+import { useCartStore } from "../store/cartStore.jsx";
 import { Link } from "react-router-dom";
 
-// 장바구니 페이지 UI 컴포넌트 (전역 상태에서 데이터 가져와서 보여줌)
+// 장바구니 페이지 UI 컴포넌트
 export default function CartPage() {
   const { items, updateQuantity, removeFromCart, clearCart, fetchCart } =
     useCartStore();
@@ -18,20 +18,26 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto p-4 md:p-8 max-w-4xl">
+      <div className="container mx-auto p-4 md:p-8 max-w-7xl">
         <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-8">
           장바구니
         </h2>
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="bg-white rounded-3xl p-12 flex flex-col items-center justify-center min-h-[50vh] shadow-sm border border-gray-100">
           <div className="w-20 h-20 bg-gray-50 text-gray-300 border border-gray-100 rounded-full mb-6 flex items-center justify-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="36"
               height="36"
-              fill="currentColor"
-              viewBox="0 0 256 256"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <path d="M222.14,58.87A8,8,0,0,0,216,56H54.68L49.79,29.14A16,16,0,0,0,34.05,16H16a8,8,0,0,0,0,16h18L59.56,172.29a24,24,0,0,0,5.33,11.27,28,28,0,1,0,44.4,8.44h45.42a27.75,27.75,0,0,0-2.71-12h-49.8a8,8,0,0,1-7.71-10.14l2.25-8.36H185a24,24,0,0,0,23.16-17.65l21.84-80A8,8,0,0,0,222.14,58.87ZM88,216a12,12,0,1,1-12-12A12,12,0,0,1,88,216Zm119.53-96.11a8,8,0,0,1-7.72,5.88H71.49l-14.54-54h153Z"></path>
+              <circle cx="8" cy="21" r="1" />
+              <circle cx="19" cy="21" r="1" />
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
             </svg>
           </div>
           <h3 className="text-xl font-bold text-gray-800 mb-2 tracking-tight">
@@ -42,7 +48,7 @@ export default function CartPage() {
           </p>
           <Link
             to="/books"
-            className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200 active:scale-95"
+            className="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-sm hover:bg-blue-700 transition active:scale-95"
           >
             도서 둘러보기
           </Link>
@@ -52,17 +58,14 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-4xl">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">🛒</span>
-          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-            장바구니
-          </h2>
-        </div>
+    <div className="container mx-auto p-4 md:p-8 max-w-7xl">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-8">
+          장바구니
+        </h2>
         <button
           onClick={() => clearCart()}
-          className="text-sm font-bold text-gray-500 hover:text-red-500 bg-white hover:bg-red-50 px-4 py-2 rounded-xl transition-colors border border-gray-200 hover:border-red-200 shadow-sm active:scale-95 cursor-pointer"
+          className="text-sm font-bold text-gray-500 hover:text-red-500 bg-white hover:bg-red-50 px-4 py-2 rounded-xl transition-colors border border-gray-200 hover:border-red-200 shadow-sm active:scale-95 cursor-pointer mb-8"
         >
           전체 비우기
         </button>
@@ -74,16 +77,19 @@ export default function CartPage() {
             key={item.bookId}
             className="flex flex-col sm:flex-row items-center py-6 border-b border-gray-100 last:border-b-0 gap-6"
           >
-            <div className="w-20 h-28 bg-gray-100 rounded-xl overflow-hidden shrink-0 flex items-center justify-center shadow-sm border border-gray-100 relative">
+            {/* [개선] 박스 크기(w-20 h-28)는 유지하되, 이미지가 잘리지 않도록 object-contain 적용 */}
+            <div className="w-20 h-28 bg-white border border-gray-100 rounded-xl overflow-hidden shrink-0 flex items-center justify-center shadow-sm p-1">
               {item.coverImageUrl ? (
                 <img
                   src={item.coverImageUrl}
                   alt={item.title}
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full object-contain"
                 />
               ) : (
-                <span className="text-gray-400 text-[10px] font-medium">
-                  이미지 준비중
+                <span className="text-gray-400 text-[10px] font-medium text-center">
+                  이미지
+                  <br />
+                  준비중
                 </span>
               )}
             </div>

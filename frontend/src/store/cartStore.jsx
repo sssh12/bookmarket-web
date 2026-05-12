@@ -74,7 +74,8 @@ export const useCartStore = create((set, get) => ({
   updateQuantity: (bookId, delta) => {
     const newItems = get().items.map((item) => {
       if (item.bookId === bookId) {
-        return { ...item, quantity: Math.max(1, item.quantity + delta) };
+        const newQuantity = Math.max(1, item.quantity + delta);
+        return { ...item, quantity: newQuantity };
       }
       return item;
     });
@@ -85,7 +86,8 @@ export const useCartStore = create((set, get) => ({
 
   clearCart: () => {
     set({ items: [] });
-    get().syncCartToDB([]); // 이건 사용자가 "전체 비우기" 버튼을 누를 때만 사용
+    // 프론트엔드를 비울 때 DB 장바구니 데이터에도 빈 배열을 전송하여 확실하게 비워줌
+    get().syncCartToDB([]);
   },
 
   clearCartLocal: () => {

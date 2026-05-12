@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axios";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function AdminBookListPage() {
   const [books, setBooks] = useState([]);
@@ -11,7 +12,7 @@ export default function AdminBookListPage() {
     api
       .get("/api/books")
       .then((res) => {
-        // [개선 2] 데이터를 받아온 직후 bookId 기준으로 오름차순(최신순) 정렬 처리
+        // 데이터를 받아온 직후 bookId 기준으로 오름차순 정렬 처리
         const sortedBooks = res.data.sort((a, b) => a.bookId - b.bookId);
         setBooks(sortedBooks);
         setLoading(false);
@@ -35,10 +36,10 @@ export default function AdminBookListPage() {
       try {
         await api.delete(`/api/books/${id}`);
         setBooks((prevBooks) => prevBooks.filter((book) => book.bookId !== id));
-        alert("성공적으로 삭제되었습니다.");
+        toast.success("성공적으로 삭제되었습니다.");
       } catch (err) {
-        console.error("도서 삭제 실패:", err);
-        alert("도서 삭제 중 오류가 발생했습니다.");
+        console.error("삭제 실패:", err);
+        toast.error("삭제 중 오류가 발생했습니다.");
       }
     }
   };

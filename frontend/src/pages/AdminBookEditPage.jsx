@@ -3,6 +3,7 @@ import api from "../../api/axios.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../supabaseClient.js";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 export default function AdminBookEditPage() {
   const { id } = useParams();
@@ -36,27 +37,26 @@ export default function AdminBookEditPage() {
           과학: "6",
           "만화/라이트노벨": "7",
         };
-        const categoryId = categoryMap[bookData.categoryName] || "";
+
+        const categoryId = categoryMap[bookData.categoryName] || "1";
 
         reset({
           title: bookData.title,
           author: bookData.author,
           publisher: bookData.publisher,
           price: bookData.price,
-          origin: bookData.origin,
-          categoryId: categoryId,
-          publishedAt: bookData.publishedAt
-            ? bookData.publishedAt.split("T")[0]
-            : "",
           isbn: bookData.isbn,
           description: bookData.description,
+          categoryId: categoryId,
+          origin: bookData.origin === "FOREIGN" ? "FOREIGN" : "DOMESTIC",
         });
 
-        setExistingImage(bookData.coverImageUrl);
+        if (bookData.coverImageUrl) {
+          setExistingImage(bookData.coverImageUrl);
+        }
       } catch (error) {
-        console.error("도서 정보 불러오기 실패:", error);
-        alert("도서 정보를 불러오는 중 오류가 발생했습니다.");
-        navigate("/admin/books");
+        console.error("도서 정보 로딩 실패:", error);
+        toast.error("도서 정보를 불러오는데 실패했습니다.");
       } finally {
         setLoadingData(false);
       }
@@ -106,11 +106,11 @@ export default function AdminBookEditPage() {
 
       await api.put(`/api/books/${id}`, updatedBook);
 
-      alert("✅ 도서 정보가 성공적으로 수정되었습니다!");
+      toast.success("도서 정보가 성공적으로 수정되었습니다!");
       navigate("/admin/books");
     } catch (error) {
       console.error(error);
-      alert("도서 수정 중 오류가 발생했습니다.");
+      toast.error("도서 수정 중 오류가 발생했습니다.");
     } finally {
       setUploading(false);
     }
@@ -118,8 +118,8 @@ export default function AdminBookEditPage() {
 
   const onError = (errors) => {
     console.error("폼 검증 실패:", errors);
-    alert(
-      "입력되지 않은 필수 항목이 있거나 입력 형식이 올바르지 않습니다.\n화면의 붉은색 경고 메시지를 확인해주세요.",
+    toast.error(
+      "입력되지 않은 필수 항목이 있거나 입력 형식이 올바르지 않습니다.",
     );
   };
 

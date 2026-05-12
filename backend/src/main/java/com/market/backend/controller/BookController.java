@@ -26,6 +26,13 @@ public class BookController {
         return ResponseEntity.ok(bookService.getBookById(id));
     }
 
+    // [기능 추가] 실제 판매량 기준 베스트셀러 조회 (카테고리 필터 포함)
+    @GetMapping("/bestsellers")
+    public ResponseEntity<List<BookResponseDto>> getBestsellers(
+            @RequestParam(value = "categoryId", required = false) Long categoryId) {
+        return ResponseEntity.ok(bookService.getBestsellers(categoryId));
+    }
+
     @PostMapping
     public ResponseEntity<Void> createBook(@RequestBody BookRequestDto requestDto) {
         bookService.createBook(requestDto);
@@ -38,7 +45,6 @@ public class BookController {
         return ResponseEntity.ok().build();
     }
 
-    // [기능 추가] 도서 삭제 엔드포인트
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);

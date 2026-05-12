@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient.js";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios.js";
+import { toast } from "sonner";
 
 export default function ProfileEditPage() {
   const [name, setName] = useState("");
@@ -35,13 +36,14 @@ export default function ProfileEditPage() {
             : session.user.user_metadata?.full_name || "";
 
         setName(resolvedName);
-        // [수정] 백엔드에서 phoneNumber로 받도록 매핑
+        // 백엔드에서 phoneNumber로 받도록 매핑
         setPhone(
           response.data.phoneNumber || session.user.user_metadata?.phone || "",
         );
         setAddress(response.data.address || "");
       } catch (error) {
         console.error("유저 정보 로딩 실패:", error);
+        toast.error("유저 정보를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setLoading(false);
       }
@@ -60,18 +62,18 @@ export default function ProfileEditPage() {
       });
       if (authError) throw authError;
 
-      // [수정] 백엔드 요청 시 phoneNumber 변수명 사용
+      // 백엔드 요청 시 phoneNumber 변수명 사용
       await api.put(`/api/users/${userEmail}/profile`, {
         name: name,
         phoneNumber: phone,
         address: address,
       });
 
-      alert("정보가 성공적으로 수정되었습니다.");
+      toast.success("정보가 성공적으로 수정되었습니다.");
       navigate("/profile");
     } catch (error) {
       console.error("정보 수정 실패:", error);
-      alert("정보 수정 중 오류가 발생했습니다.");
+      toast.error("정보 수정 중 오류가 발생했습니다.");
     } finally {
       setSaving(false);
     }

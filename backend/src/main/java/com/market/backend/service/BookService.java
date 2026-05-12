@@ -21,7 +21,7 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
-     private final CartItemRepository cartItemRepository;
+    private final CartItemRepository cartItemRepository;
 
     public List<BookResponseDto> getAllBooks() {
         return bookRepository.findAll().stream()
@@ -33,6 +33,22 @@ public class BookService {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 도서가 존재하지 않습니다."));
         return BookResponseDto.from(book);
+    }
+
+    // [추가] 실제 판매량(OrderItems) 기반 베스트셀러 Top 5 조회 (카테고리별 분기 처리)
+    public List<BookResponseDto> getBestsellers(Long categoryId) {
+        List<Book> bestBooks;
+        
+        // categoryId가 없거나 0이면 '전체' 베스트셀러 조회, 그 외엔 해당 카테고리의 베스트셀러 조회
+        if (categoryId == null || categoryId == 0) {
+            bestBooks = bookRepository.findTop5BestsellersAll();
+        } else {
+            bestBooks = bookRepository.findTop5BestsellersByCategoryId(categoryId);
+        }
+
+        return bestBooks.stream()
+                .map(BookResponseDto::from)
+                .collect(Collectors.toList());
     }
 
     @Transactional

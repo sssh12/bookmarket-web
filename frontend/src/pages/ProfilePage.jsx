@@ -31,7 +31,6 @@ export default function ProfilePage() {
         setUserData({
           email: session.user.email,
           name: resolvedName,
-          // [수정] phoneNumber로 매핑
           phone: response.data.phoneNumber || session.user.user_metadata?.phone,
           address: response.data.address,
         });

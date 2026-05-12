@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import { supabase } from "../supabaseClient.js";
 import api from "../../api/axios.js";
+import { toast } from "sonner";
 
 export const useWishlistStore = create((set, get) => ({
   wishlist: [],
 
-  // 백엔드 API에서 유저의 찜 목록 불러오기
   fetchWishlist: async () => {
     const {
       data: { session },
@@ -25,13 +25,13 @@ export const useWishlistStore = create((set, get) => ({
     }
   },
 
-  // 백엔드 API로 찜하기 토글 전송
   toggleWishlist: async (book) => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
     if (!session) {
-      alert("로그인이 필요한 기능입니다.");
+      toast.error("로그인이 필요한 기능입니다.");
       return;
     }
 
@@ -39,29 +39,25 @@ export const useWishlistStore = create((set, get) => ({
     const currentList = get().wishlist;
     const isExist = currentList.find((item) => item.bookId === book.bookId);
 
-    // 1. UI 즉시 반영
+    // 1. UI 즉시 반영 (Optimistic Update)
     if (isExist) {
       set({
         wishlist: currentList.filter((item) => item.bookId !== book.bookId),
       });
     } else {
-      set({ wishlist: [...currentList, book] });
+      set({
+        wishlist: [...currentList, book],
+      });
     }
 
-    // 2. 백엔드 DB 연동
+    // 2. 백엔드 연동
     try {
       await api.post("/api/wishlists/toggle", {
-        userEmail: userEmail,
+        userEmail,
         bookId: book.bookId,
       });
     } catch (error) {
-      console.error("찜하기 실패:", error);
-      // 에러 발생 시 원래 상태로 롤백
-      get().fetchWishlist();
+      console.error("찜하기 통신 오류:", error);
     }
-  },
-
-  isInWishlist: (bookId) => {
-    return get().wishlist.some((item) => item.bookId === bookId);
   },
 }));

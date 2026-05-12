@@ -4,11 +4,16 @@ import com.market.backend.domain.Order;
 import com.market.backend.domain.OrderItem;
 import com.market.backend.domain.User;
 import com.market.backend.dto.OrderRequestDto;
+import com.market.backend.dto.OrderResponseDto; // [추가]
 import com.market.backend.repository.OrderRepository;
 import com.market.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +47,8 @@ public class OrderService {
                 .phone(dto.phone())
                 .address(dto.address())
                 .totalPrice(dto.totalPrice())
+                // [수정] 주문 날짜 명시적 세팅
+                .orderDate(LocalDateTime.now())
                 .build();
 
         // 3. 주문 상품(OrderItem) 변환 및 추가
@@ -57,5 +64,14 @@ public class OrderService {
 
         // 4. DB에 저장
         orderRepository.save(order);
+    }
+
+    // [추가] 유저의 이메일을 기반으로 주문 내역 조회
+    @Transactional(readOnly = true)
+    public List<OrderResponseDto> getOrdersByEmail(String email) {
+        List<Order> orders = orderRepository.findByUser_EmailOrderByOrderIdDesc(email);
+        return orders.stream()
+                .map(OrderResponseDto::from)
+                .collect(Collectors.toList());
     }
 }
