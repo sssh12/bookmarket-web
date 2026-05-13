@@ -32,6 +32,14 @@ const signUpSchema = z
     path: ["passwordConfirm"],
   });
 
+const authErrorMessagesKo = (error) => {
+  const message = error?.message || "";
+  if (message.includes("Invalid login credentials")) {
+    return "이메일 또는 비밀번호가 올바르지 않습니다.";
+  }
+  return "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
+};
+
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [globalMessage, setGlobalMessage] = useState("");
@@ -54,14 +62,19 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         // 자체 로그인
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
+        const { data: authData, error } =
+          await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
-        navigate("/books");
+        const { data: userRow, error: userError } = await supabase
+          .from("user_tb")
+          .select("role")
+          .eq("email", authData.user.email)
+          .single();
+
+        if (userError) throw userError;
+
+        navigate(userRow.role === "ADMIN" ? "/admin/books" : "/books");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -84,7 +97,7 @@ export default function AuthPage() {
     } catch (error) {
       setGlobalMessage("");
       console.error(error);
-      toast.error(`[오류] ${error.message}`);
+      toast.error(`${authErrorMessagesKo(error)}`);
     }
   };
 
@@ -100,7 +113,7 @@ export default function AuthPage() {
       if (error) throw error;
     } catch (error) {
       console.error("구글 로그인 실패:", error.message);
-      toast.error("구글 로그인 중 문제가 발생했습니다.");
+      toast.error(`${authErrorMessagesKo(error)}`);
     }
   };
 

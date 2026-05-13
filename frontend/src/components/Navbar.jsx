@@ -4,7 +4,7 @@ import { useCartStore } from "../store/cartStore.jsx";
 import { useWishlistStore } from "../store/wishlistStore.jsx";
 import { supabase } from "../supabaseClient.js";
 
-export default function Navbar({ session }) {
+export default function Navbar({ session, userRole }) {
   const cartItems = useCartStore((state) => state.items) || [];
   const totalQuantity = cartItems.reduce(
     (total, item) => total + (item.quantity || 1),
@@ -38,7 +38,7 @@ export default function Navbar({ session }) {
     navigate("/");
   };
 
-  const isAdmin = session?.user?.email === "admin@test.com";
+  const isAdmin = userRole === "ADMIN";
 
   const getMenuClass = (path, isSubMenu = false, relatedPaths = []) => {
     const isActive =
@@ -73,6 +73,26 @@ export default function Navbar({ session }) {
             <Link to="/" className={getMenuClass("/")}>
               로그인
             </Link>
+          ) : isAdmin ? (
+            // 관리자 전용: 관리자 드롭다운만
+            <div className="relative group cursor-pointer">
+              <Link to="/admin/books" className={getMenuClass("/admin")}>
+                관리자
+              </Link>
+              <div className="absolute top-14 left-0 w-40 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 ease-out z-50">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 py-2 flex flex-col overflow-hidden">
+                  <Link
+                    to="/admin/books"
+                    className={getMenuClass("/admin/books", true)}
+                  >
+                    도서 관리
+                  </Link>
+                  <Link to="/admin" className={getMenuClass("/admin", true)}>
+                    신규 도서 등록
+                  </Link>
+                </div>
+              </div>
+            </div>
           ) : (
             <>
               {/* 1. 고객 정보 */}
@@ -241,14 +261,23 @@ export default function Navbar({ session }) {
 
         {/* 우측 아이콘 */}
         {session && (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {isAdmin ? (
-              <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200 shadow-sm cursor-help">
-                <span className="text-sm">⚙️</span>
-                <span className="text-xs font-bold text-yellow-700">
-                  관리자
-                </span>
-              </div>
+              <>
+                <button
+                  onClick={handleLogout}
+                  className="h-8 px-3 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-full shadow-sm transition-all hover:bg-red-100 hover:text-red-700 active:scale-95 cursor-pointer"
+                >
+                  로그아웃
+                </button>
+
+                <div className="h-8 flex items-center gap-2 bg-yellow-50 px-3 rounded-full border border-yellow-200 shadow-sm cursor-help">
+                  <span className="text-sm">⚙️</span>
+                  <span className="text-xs font-bold text-yellow-700">
+                    관리자
+                  </span>
+                </div>
+              </>
             ) : (
               <Link
                 to="/profile"
