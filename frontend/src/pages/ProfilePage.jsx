@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient.js";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api/axios.js";
 
+// 로그인한 사용자의 프로필 정보를 표시하는 화면
 export default function ProfilePage() {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,18 +20,45 @@ export default function ProfilePage() {
           return;
         }
 
+        // 백엔드 DB에서 현재 유저 정보 가져오기
         const response = await api.get(`/api/users/${session.user.email}`);
         const dbName = response.data.name;
         const emailPrefix = session.user.email.split("@")[0];
 
-        const resolvedName =
-          dbName && dbName !== emailPrefix
-            ? dbName
-            : session.user.user_metadata?.full_name || "";
+        // Supabase Auth 세션에서 진짜 소셜 이름 추출
+        const socialName =
+          session.user.user_metadata?.full_name ||
+          session.user.user_metadata?.name ||
+          "";
+
+        let finalName = dbName;
+
+        if (
+          dbName === emailPrefix &&
+          socialName &&
+          socialName !== emailPrefix
+        ) {
+          try {
+            await api.put(`/api/users/${session.user.email}/profile`, {
+              name: socialName,
+              phoneNumber:
+                response.data.phoneNumber ||
+                session.user.user_metadata?.phone ||
+                "",
+              address: response.data.address || "",
+            });
+            finalName = socialName; // 동기화 성공 시 화면에 노출될 최종 이름도 소셜 이름으로 업데이트
+          } catch (syncError) {
+            console.error("이름 자동 동기화 실패:", syncError);
+            finalName = socialName; // 통신 실패하더라도 유저 화면에는 올바른 이름을 띄워줌
+          }
+        } else if (!dbName) {
+          finalName = socialName || emailPrefix;
+        }
 
         setUserData({
           email: session.user.email,
-          name: resolvedName,
+          name: finalName,
           phone: response.data.phoneNumber || session.user.user_metadata?.phone,
           address: response.data.address,
         });

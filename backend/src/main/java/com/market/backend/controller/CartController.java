@@ -12,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/carts")
 @RequiredArgsConstructor
+// 장바구니 관련 요청을 처리하는 REST 컨트롤러
 public class CartController {
 
     private final CartService cartService;

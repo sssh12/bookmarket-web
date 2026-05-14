@@ -14,6 +14,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+// 장바구니에 담긴 개별 도서 항목을 표현하는 엔티티
 public class CartItem {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartItemId;

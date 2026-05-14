@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+// 도서 조회와 관리에 필요한 비즈니스 로직을 담당하는 서비스
 public class BookService {
 
     private final BookRepository bookRepository;

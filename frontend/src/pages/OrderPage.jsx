@@ -5,6 +5,7 @@ import { supabase } from "../supabaseClient.js";
 import { useNavigate, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 
+// 장바구니를 바탕으로 주문과 결제를 진행하는 화면
 export default function OrderPage() {
   const { items, clearCart } = useCartStore();
   const navigate = useNavigate();

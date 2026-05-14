@@ -3,7 +3,9 @@ import api from "../../api/axios.js";
 import { useCartStore } from "../store/cartStore.jsx";
 import { useWishlistStore } from "../store/wishlistStore.jsx";
 import { toast } from "sonner";
+import BookDetailModal from "../components/BookDetailModal";
 
+// 베스트셀러 도서를 카테고리별로 보여주는 목록 화면
 export default function BestsellerPage() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,11 @@ export default function BestsellerPage() {
   // 현재 선택된 카테고리 상태 관리 (0은 '전체'를 의미)
   const [selectedCategory, setSelectedCategory] = useState(0);
 
-  // 카테고리 데이터
+  // [기능 추가] 모달 상태 관리
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 제공해주신 카테고리 데이터
   const categories = [
     { idx: 0, category_id: 1, category_name: "소설/시/희곡" },
     { idx: 1, category_id: 2, category_name: "IT/모바일" },
@@ -30,7 +36,7 @@ export default function BestsellerPage() {
     fetchWishlist();
   }, [fetchWishlist]);
 
-  // useEffect 내부의 동기적 상태 변경(setLoading)을 제거하고 순수 데이터 Fetching만 담당
+  // [수정] useEffect 내부의 동기적 상태 변경(setLoading)을 제거하고 순수 데이터 Fetching만 담당
   useEffect(() => {
     let ignore = false; // 언마운트 시 상태 업데이트 방지용 플래그
 
@@ -71,9 +77,15 @@ export default function BestsellerPage() {
 
   const handleCategoryClick = (categoryId) => {
     if (selectedCategory !== categoryId) {
-      setLoading(true); // 사용자의 '클릭 액션'에서 로딩 상태를 켬
+      setLoading(true); // [해결] 사용자의 '클릭 액션'에서 로딩 상태를 켬 (연쇄 렌더링 방지)
       setSelectedCategory(categoryId);
     }
+  };
+
+  // [기능 추가] 도서 클릭 시 모달 열기
+  const openBookModal = (book) => {
+    setSelectedBook(book);
+    setIsModalOpen(true);
   };
 
   const getOriginLabel = (origin) => {
@@ -90,7 +102,7 @@ export default function BestsellerPage() {
           </h2>
         </div>
 
-        {/* 카테고리 필터 칩 UI */}
+        {/* 카테고리 필터 칩 (Chip) UI */}
         <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
             onClick={() => handleCategoryClick(0)}
@@ -139,7 +151,8 @@ export default function BestsellerPage() {
             return (
               <div
                 key={book.bookId}
-                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-md transition-shadow relative"
+                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-md relative cursor-pointer hover:scale-101 active:scale-100 transition-all"
+                onClick={() => openBookModal(book)}
               >
                 {/* 랭킹 뱃지 */}
                 <div
@@ -151,7 +164,10 @@ export default function BestsellerPage() {
                 </div>
 
                 <button
-                  onClick={() => toggleWishlist(book)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleWishlist(book);
+                  }}
                   className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer"
                 >
                   {isWished ? "❤️" : "🖤"}
@@ -226,7 +242,10 @@ export default function BestsellerPage() {
                     {book.price?.toLocaleString() || 0}원
                   </span>
                   <button
-                    onClick={() => handleAddToCart(book)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(book);
+                    }}
                     className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer"
                   >
                     담기
@@ -237,6 +256,13 @@ export default function BestsellerPage() {
           })}
         </div>
       )}
+
+      {/* [기능 추가] 도서 상세 모달 */}
+      <BookDetailModal
+        book={selectedBook}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

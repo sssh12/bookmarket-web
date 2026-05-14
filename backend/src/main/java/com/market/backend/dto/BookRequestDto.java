@@ -4,6 +4,7 @@ import com.market.backend.domain.Book;
 import com.market.backend.domain.Category;
 import java.time.LocalDate;
 
+// 도서 등록과 수정을 위한 요청 DTO
 public record BookRequestDto(
         String title,
         String author,

@@ -9,6 +9,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+// 도서 분류 정보를 저장하는 엔티티
 public class Category {
 
     @Id

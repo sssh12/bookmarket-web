@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient.js";
+import { supabase } from "../supabaseClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -40,6 +40,7 @@ const authErrorMessagesKo = (error) => {
   return "로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
 };
 
+// 로그인과 회원가입을 처리하는 인증 화면
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [globalMessage, setGlobalMessage] = useState("");
@@ -70,7 +71,7 @@ export default function AuthPage() {
           .from("user_tb")
           .select("role")
           .eq("email", authData.user.email)
-          .single();
+          .maybeSingle();
 
         if (userError) throw userError;
 
@@ -113,6 +114,24 @@ export default function AuthPage() {
       if (error) throw error;
     } catch (error) {
       console.error("구글 로그인 실패:", error.message);
+      toast.error(`${authErrorMessagesKo(error)}`);
+    }
+  };
+
+  // [기능 추가] 네이버 소셜 로그인 로직 (Custom OAuth Provider 사용)
+  const handleNaverLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        // Supabase 대시보드에서 등록할 커스텀 프로바이더의 식별자입니다.
+        provider: "custom:naver",
+        options: {
+          redirectTo: window.location.origin + "/books",
+        },
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("네이버 로그인 실패:", error.message);
       toast.error(`${authErrorMessagesKo(error)}`);
     }
   };
@@ -275,13 +294,13 @@ export default function AuthPage() {
           <hr className="w-full border-gray-100" />
         </div>
 
+        {/* 구글 로그인 버튼 */}
         <button
           onClick={handleGoogleLogin}
           type="button"
           className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-bold py-3.5 mt-6 rounded-2xl hover:bg-gray-50 transition-colors active:scale-95 cursor-pointer shadow-sm"
         >
-          {/* 구글 로고 SVG */}
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -299,7 +318,20 @@ export default function AuthPage() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Google로 시작하기
+          <span className="ml-0.5">Google로 시작하기</span>
+        </button>
+
+        {/* [기능 추가] 네이버 로그인 버튼 */}
+        <button
+          onClick={handleNaverLogin}
+          type="button"
+          className="w-full flex items-center justify-center gap-3 bg-[#03C75A] text-white font-bold py-3.5 mt-3 rounded-2xl hover:bg-[#02b351] transition-colors active:scale-95 cursor-pointer shadow-sm"
+        >
+          {/* 네이버 로고 SVG */}
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z" />
+          </svg>
+          <span className="ml-1">네이버로 시작하기</span>
         </button>
 
         <div className="mt-8 text-center">

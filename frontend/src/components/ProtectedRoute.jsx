@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { toast } from "sonner";
 
+// 로그인 여부와 관리자 권한을 검사해 접근을 제어하는 라우트 가드
 export default function ProtectedRoute({ requireAdmin = false }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,21 +22,29 @@ export default function ProtectedRoute({ requireAdmin = false }) {
     const fetchRole = async () => {
       if (!session?.user?.email) {
         setUserRole(null);
-        setRoleChecked(true);
+        setRoleChecked(false);
+        setRoleLoading(false);
         return;
       }
 
-      setRoleChecked(false); // 세션 생겼을 때는 다시 미확인 상태로
+      setRoleChecked(false);
       setRoleLoading(true);
+
+      console.log("PR session email:", session?.user?.email);
 
       const { data, error } = await supabase
         .from("user_tb")
         .select("role")
         .eq("email", session.user.email)
-        .single();
+        .maybeSingle();
 
-      if (!error) {
-        setUserRole(data?.role ?? null);
+      console.log("PR role query:", { data, error });
+
+      if (error) {
+        console.error("role 조회 실패:", error);
+        setUserRole(null);
+      } else {
+        setUserRole(data?.role ?? "USER");
       }
 
       setRoleLoading(false);
@@ -46,10 +55,7 @@ export default function ProtectedRoute({ requireAdmin = false }) {
   }, [session?.user?.email]);
 
   // role 조회 완료 전에는 무조건 대기
-  if (
-    loading ||
-    (session && (!roleChecked || roleLoading || userRole === null))
-  ) {
+  if (loading || (session && (!roleChecked || roleLoading))) {
     return <div className="p-10 text-center">인증 정보 확인 중... ⏳</div>;
   }
 

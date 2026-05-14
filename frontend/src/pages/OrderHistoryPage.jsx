@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 10;
 
+// 이전 주문 내역을 조회하고 영수증을 보여주는 화면
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);

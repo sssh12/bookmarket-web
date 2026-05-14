@@ -3,6 +3,7 @@ package com.market.backend.dto;
 import com.market.backend.domain.Book;
 import java.time.LocalDateTime;
 
+// 화면에 도서를 표시하기 위한 응답 DTO
 public record BookResponseDto(
         Long bookId,
         String title,

@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import api from "../../api/axios.js";
-import { useCartStore } from "../store/cartStore.jsx";
-import { useWishlistStore } from "../store/wishlistStore.jsx";
+import api from "../../api/axios";
+import { useCartStore } from "../store/cartStore";
+import { useWishlistStore } from "../store/wishlistStore";
 import { toast } from "sonner";
+import BookDetailModal from "../components/BookDetailModal";
 
+// 전체 도서 목록과 검색, 필터, 페이지네이션을 제공하는 화면
 const CATEGORIES = [
   "전체",
   "소설/시/희곡",
@@ -22,10 +24,14 @@ export default function BookList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 검색, 필터링, 페이지네이션 상태
+  // [기능 추가] 검색, 필터링, 페이지네이션 상태
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("전체");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // [기능 추가] 모달 상태 관리
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const addToCart = useCartStore((state) => state.addToCart);
   const { toggleWishlist, wishlist, fetchWishlist } = useWishlistStore();
@@ -52,6 +58,7 @@ export default function BookList() {
 
   const handleAddToCart = (book) => {
     addToCart(book);
+    // [리팩토링] 도서를 담을 때마다 화면 중앙을 가리는 alert 대신 toast.success 사용
     toast.success(`[${book.title}] 도서가 장바구니에 담겼습니다.`);
   };
 
@@ -74,6 +81,12 @@ export default function BookList() {
     setCurrentPage(1);
   };
 
+  // [기능 추가] 도서 클릭 시 모달 열기
+  const openBookModal = (book) => {
+    setSelectedBook(book);
+    setIsModalOpen(true);
+  };
+
   // 1. 데이터 필터링 로직 (검색어 + 카테고리)
   const filteredBooks = books.filter((book) => {
     const matchesSearch =
@@ -88,7 +101,7 @@ export default function BookList() {
   });
 
   // 2. 페이지네이션 처리 로직
-  // 항목이 없거나 10개 미만이어도 최소 1페이지는 보여주도록 Math.max(1, ...) 적용
+  // [요구사항 반영] 항목이 없거나 10개 미만이어도 최소 1페이지는 보여주도록 Math.max(1, ...) 적용
   const totalPages = Math.max(
     1,
     Math.ceil(filteredBooks.length / ITEMS_PER_PAGE),
@@ -158,10 +171,14 @@ export default function BookList() {
             return (
               <div
                 key={book.bookId}
-                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-md transition-shadow relative"
+                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-md relative cursor-pointer hover:scale-101 active:scale-100 transition-all"
+                onClick={() => openBookModal(book)}
               >
                 <button
-                  onClick={() => toggleWishlist(book)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // 모달 열기 이벤트 전파 방지
+                    toggleWishlist(book);
+                  }}
                   className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer"
                 >
                   {isWished ? "❤️" : "🖤"}
@@ -224,7 +241,10 @@ export default function BookList() {
                     {book.price?.toLocaleString() || 0}원
                   </span>
                   <button
-                    onClick={() => handleAddToCart(book)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // 모달 열기 이벤트 전파 방지
+                      handleAddToCart(book);
+                    }}
                     className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer"
                   >
                     담기
@@ -278,6 +298,13 @@ export default function BookList() {
           &gt;
         </button>
       </div>
+
+      {/* [기능 추가] 도서 상세 모달 */}
+      <BookDetailModal
+        book={selectedBook}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

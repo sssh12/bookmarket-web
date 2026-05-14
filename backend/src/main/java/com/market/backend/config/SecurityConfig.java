@@ -9,6 +9,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+// API 접근 정책과 보안 관련 기본 설정을 정의하는 클래스
 public class SecurityConfig {
 
     @Bean

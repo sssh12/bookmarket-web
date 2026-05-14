@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient.js";
 import api from "../../api/axios.js";
 import { toast } from "sonner";
 
+// 찜 목록을 상태로 관리하고 백엔드와 동기화하는 Zustand 스토어
 export const useWishlistStore = create((set, get) => ({
   wishlist: [],
 

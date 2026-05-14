@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+// 도서의 기본 정보와 판매/진열 데이터를 담는 엔티티
 public class Book {
 
     @Id

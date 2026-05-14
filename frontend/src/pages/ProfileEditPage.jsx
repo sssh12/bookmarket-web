@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/axios.js";
 import { toast } from "sonner";
 
+// 사용자 프로필 정보를 수정하는 화면
 export default function ProfileEditPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");

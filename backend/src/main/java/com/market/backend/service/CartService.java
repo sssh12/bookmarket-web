@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 // 장바구니 관련 비즈니스 로직(조회, 동기화 등)을 처리하는 서비스 클래스임
+// 장바구니 생성, 동기화, 항목 관리 로직을 담당하는 서비스
 public class CartService {
 
     private final CartRepository cartRepository;

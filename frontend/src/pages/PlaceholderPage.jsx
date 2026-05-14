@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+// 아직 구현되지 않은 기능을 안내하는 임시 화면
 export default function PlaceholderPage() {
   return (
     <div className="container mx-auto p-10 flex flex-col items-center justify-center h-[70vh]">

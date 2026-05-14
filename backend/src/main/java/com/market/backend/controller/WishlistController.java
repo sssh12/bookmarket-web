@@ -12,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/wishlists")
 @RequiredArgsConstructor
+// 찜 목록 추가와 조회 요청을 처리하는 REST 컨트롤러
 public class WishlistController {
 
     private final WishlistService wishlistService;

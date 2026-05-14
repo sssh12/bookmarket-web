@@ -27,6 +27,7 @@ import ForeignBookPage from "./pages/ForeignBookPage.jsx";
 import AdminBookListPage from "./pages/AdminBookListPage.jsx";
 import AdminBookEditPage from "./pages/AdminBookEditPage.jsx";
 
+// 로그인 상태와 사용자 권한에 따라 전체 라우팅을 구성하는 최상위 앱 컴포넌트
 function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -53,7 +54,8 @@ function App() {
     const fetchRole = async () => {
       if (!session?.user?.email) {
         setUserRole(null);
-        setRoleChecked(true);
+        setRoleChecked(false);
+        setRoleLoading(false);
         return;
       }
 
@@ -62,10 +64,13 @@ function App() {
         .from("user_tb")
         .select("role")
         .eq("email", session.user.email)
-        .single();
+        .maybeSingle();
 
-      if (!error) {
-        setUserRole(data?.role ?? null);
+      if (error) {
+        console.error("role 조회 실패:", error);
+        setUserRole(null);
+      } else {
+        setUserRole(data?.role ?? "USER");
       }
 
       setRoleLoading(false);
@@ -75,10 +80,7 @@ function App() {
     fetchRole();
   }, [session?.user?.email]);
 
-  if (
-    authLoading ||
-    (session && (!roleChecked || roleLoading || userRole === null))
-  ) {
+  if (authLoading || (session && (!roleChecked || roleLoading))) {
     return (
       <div className="p-10 text-center font-bold text-gray-500">
         앱 초기화 중... ⏳

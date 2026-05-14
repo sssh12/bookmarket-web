@@ -15,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+// 주문 전체 정보를 저장하는 엔티티
 public class Order {
 
     @Id

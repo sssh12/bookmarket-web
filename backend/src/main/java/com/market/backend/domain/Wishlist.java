@@ -14,6 +14,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+// 사용자가 찜한 도서 정보를 저장하는 엔티티
 public class Wishlist {
 
     @Id

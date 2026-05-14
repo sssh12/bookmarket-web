@@ -23,23 +23,7 @@ export default function CartPage() {
           장바구니
         </h2>
         <div className="bg-white rounded-3xl p-12 flex flex-col items-center justify-center min-h-[50vh] shadow-sm border border-gray-100">
-          <div className="w-20 h-20 bg-gray-50 text-gray-300 border border-gray-100 rounded-full mb-6 flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="8" cy="21" r="1" />
-              <circle cx="19" cy="21" r="1" />
-              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-            </svg>
-          </div>
+          <div className="text-5xl mb-4">🛒</div>
           <h3 className="text-xl font-bold text-gray-800 mb-2 tracking-tight">
             장바구니에 담긴 상품이 없습니다.
           </h3>

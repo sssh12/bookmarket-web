@@ -4,6 +4,7 @@ import { useCartStore } from "../store/cartStore.jsx";
 import { useWishlistStore } from "../store/wishlistStore.jsx";
 import { supabase } from "../supabaseClient.js";
 
+// 로그인 상태와 권한에 따라 메뉴 구성을 바꾸는 상단 내비게이션
 export default function Navbar({ session, userRole }) {
   const cartItems = useCartStore((state) => state.items) || [];
   const totalQuantity = cartItems.reduce(

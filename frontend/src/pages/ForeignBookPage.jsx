@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import api from "../../api/axios.js";
-import { useCartStore } from "../store/cartStore.jsx";
-import { useWishlistStore } from "../store/wishlistStore.jsx";
+import api from "../../api/axios";
+import { useCartStore } from "../store/cartStore";
+import { useWishlistStore } from "../store/wishlistStore";
 import { toast } from "sonner";
+import BookDetailModal from "../components/BookDetailModal";
 
+// 해외 도서만 모아 보여주는 목록 화면
 const CATEGORIES = [
   "전체",
   "소설/시/희곡",
@@ -22,10 +24,14 @@ export default function ForeignBookPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 검색, 필터링, 페이지네이션 상태
+  // [기능 추가] 검색, 필터링, 페이지네이션 상태
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("전체");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // [기능 추가] 모달 상태 관리
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const addToCart = useCartStore((state) => state.addToCart);
   const { toggleWishlist, wishlist, fetchWishlist } = useWishlistStore();
@@ -62,7 +68,7 @@ export default function ForeignBookPage() {
     return origin === "DOMESTIC" ? "국내도서" : "해외도서";
   };
 
-  // 검색어 또는 카테고리가 변경될 때 페이지를 1로 리셋
+  // [기능 추가] 검색어 또는 카테고리가 변경될 때 페이지를 1로 리셋
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
@@ -71,6 +77,12 @@ export default function ForeignBookPage() {
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
     setCurrentPage(1);
+  };
+
+  // [기능 추가] 도서 클릭 시 모달 열기
+  const openBookModal = (book) => {
+    setSelectedBook(book);
+    setIsModalOpen(true);
   };
 
   // 1. 데이터 필터링 로직 (검색어 + 카테고리)
@@ -160,10 +172,14 @@ export default function ForeignBookPage() {
             return (
               <div
                 key={book.bookId}
-                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-md transition-shadow relative"
+                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col h-full hover:shadow-md relative cursor-pointer hover:scale-101 active:scale-100 transition-all"
+                onClick={() => openBookModal(book)}
               >
                 <button
-                  onClick={() => toggleWishlist(book)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleWishlist(book);
+                  }}
                   className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer"
                 >
                   {isWished ? "❤️" : "🖤"}
@@ -225,7 +241,10 @@ export default function ForeignBookPage() {
                     {book.price?.toLocaleString() || 0}원
                   </span>
                   <button
-                    onClick={() => handleAddToCart(book)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(book);
+                    }}
                     className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer"
                   >
                     담기
@@ -279,6 +298,13 @@ export default function ForeignBookPage() {
           &gt;
         </button>
       </div>
+
+      {/* [기능 추가] 도서 상세 모달 */}
+      <BookDetailModal
+        book={selectedBook}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

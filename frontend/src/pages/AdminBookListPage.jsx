@@ -3,6 +3,7 @@ import api from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+// 관리자용 도서 목록 관리 화면
 export default function AdminBookListPage() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);

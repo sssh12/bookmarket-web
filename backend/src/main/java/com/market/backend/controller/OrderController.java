@@ -12,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
+// 주문 생성과 조회 요청을 처리하는 REST 컨트롤러
 public class OrderController {
 
     private final OrderService orderService;

@@ -5,6 +5,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+// CORS와 같은 웹 MVC 전역 설정을 담당하는 클래스
 public class WebConfig implements WebMvcConfigurer {
 
     @Override

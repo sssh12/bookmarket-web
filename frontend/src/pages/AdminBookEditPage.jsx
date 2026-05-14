@@ -5,6 +5,7 @@ import { supabase } from "../supabaseClient.js";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
+// 관리자용 도서 수정 화면
 export default function AdminBookEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();

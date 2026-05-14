@@ -11,6 +11,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+// 주문에 포함된 개별 도서 항목을 저장하는 엔티티
 public class OrderItem {
 
     @Id

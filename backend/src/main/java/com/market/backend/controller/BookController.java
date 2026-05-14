@@ -12,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
+// 도서 조회, 등록, 수정, 삭제 요청을 처리하는 REST 컨트롤러
 public class BookController {
 
     private final BookService bookService;

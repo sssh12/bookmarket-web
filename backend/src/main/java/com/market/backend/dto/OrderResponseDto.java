@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// 주문 결과와 내역을 화면에 표시하기 위한 응답 DTO
 public record OrderResponseDto(
         Long orderId,
         String recipient,

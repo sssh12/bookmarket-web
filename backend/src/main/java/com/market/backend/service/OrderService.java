@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+// 주문 생성과 주문 내역 처리 로직을 담당하는 서비스
 public class OrderService {
 
     private final OrderRepository orderRepository;

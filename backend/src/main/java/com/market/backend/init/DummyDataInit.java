@@ -14,6 +14,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+// 개발 환경에서 사용할 샘플 데이터를 초기화하는 클래스
 public class DummyDataInit implements CommandLineRunner {
 
     private final BookRepository bookRepository;

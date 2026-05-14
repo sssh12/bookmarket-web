@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+// 회원 프로필과 계정 정보를 저장하는 엔티티
 public class User {
 
     @Id

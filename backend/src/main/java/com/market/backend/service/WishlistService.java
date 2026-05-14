@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+// 찜 목록 추가, 조회, 삭제 로직을 담당하는 서비스
 public class WishlistService {
 
     private final WishlistRepository wishlistRepository;

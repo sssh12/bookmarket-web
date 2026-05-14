@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+// 사용자의 장바구니 전체 정보를 담는 엔티티
 public class Cart {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartId;

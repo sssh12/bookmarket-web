@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
+// 도서 엔티티 조회와 사용자 정의 검색 쿼리를 제공하는 저장소
 public interface BookRepository extends JpaRepository<Book, Long> {
 
     /**

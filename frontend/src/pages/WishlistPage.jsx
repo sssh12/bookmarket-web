@@ -1,23 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useWishlistStore } from "../store/wishlistStore.jsx";
-import { useCartStore } from "../store/cartStore.jsx";
-import { toast } from "sonner";
+import { useWishlistStore } from "../store/wishlistStore";
+import { useCartStore } from "../store/cartStore";
+import { toast } from "sonner"; // [리팩토링] sonner 추가
+import BookDetailModal from "../components/BookDetailModal"; // [기능 추가] 모달 임포트
 
+// 사용자가 찜한 도서를 모아 보여주는 화면
 const ITEMS_PER_PAGE = 10;
 
 export default function WishlistPage() {
   const { wishlist, fetchWishlist, toggleWishlist } = useWishlistStore();
   const addToCart = useCartStore((state) => state.addToCart);
 
-  // 페이지네이션 상태
+  // [기능 추가] 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
+
+  // [기능 추가] 모달 상태 관리
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchWishlist();
   }, [fetchWishlist]);
 
-  // 페이지네이션 처리 로직
+  // [기능 추가] 페이지네이션 처리 로직
   const totalPages = Math.max(1, Math.ceil(wishlist.length / ITEMS_PER_PAGE));
 
   // 현재 페이지가 최대 페이지를 넘지 않도록 렌더링 시점에 보정
@@ -42,7 +48,14 @@ export default function WishlistPage() {
 
   const handleAddToCart = (book) => {
     addToCart(book);
+    // [리팩토링] alert를 대체하여 모던한 알림 띄우기
     toast.success(`[${book.title}] 도서가 장바구니에 담겼습니다.`);
+  };
+
+  // [기능 추가] 도서 클릭 시 모달 열기
+  const openBookModal = (book) => {
+    setSelectedBook(book);
+    setIsModalOpen(true);
   };
 
   return (
@@ -74,10 +87,14 @@ export default function WishlistPage() {
             {currentWishlist.map((book) => (
               <div
                 key={book.bookId}
-                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col h-full relative group"
+                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col h-full relative group cursor-pointer hover:scale-101 active:scale-100 transition-all"
+                onClick={() => openBookModal(book)}
               >
                 <button
-                  onClick={() => handleToggleWishlist(book)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleWishlist(book);
+                  }}
                   className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:bg-red-50 transition-colors cursor-pointer"
                   title="찜 해제"
                 >
@@ -88,7 +105,7 @@ export default function WishlistPage() {
                     <img
                       src={book.coverImageUrl}
                       alt={book.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="text-gray-400 text-sm font-medium">
@@ -108,7 +125,10 @@ export default function WishlistPage() {
                       {book.price?.toLocaleString()}원
                     </span>
                     <button
-                      onClick={() => handleAddToCart(book)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(book);
+                      }}
                       className="text-sm bg-blue-50 text-blue-600 px-4 py-2 rounded-xl font-bold hover:bg-blue-100 transition-colors cursor-pointer"
                     >
                       담기
@@ -161,6 +181,13 @@ export default function WishlistPage() {
               &gt;
             </button>
           </div>
+
+          {/* [기능 추가] 도서 상세 모달 */}
+          <BookDetailModal
+            book={selectedBook}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+          />
         </>
       )}
     </div>
