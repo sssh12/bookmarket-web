@@ -12,7 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // 서버의 모든 API 경로에 대해
                 // 프론트엔드 개발 서버의 주소를 허용
-                .allowedOriginPatterns("*") 
+                .allowedOrigins("https://bookmarket-web.vercel.app/")
                 // 허용할 HTTP 메서드
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 // 모든 헤더 허용
